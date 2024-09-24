@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public interface UserService {
@@ -18,5 +19,9 @@ public interface UserService {
     public List<UserDetail> getAllUsers();
 
     public void saveUser(User user);
+
+    public Optional<User> getByUserName(String username);
+
+    public Optional<User> getByEmail(String email);
 
 }

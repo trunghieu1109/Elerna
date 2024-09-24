@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -46,4 +47,13 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
+    public Optional<User> getByUserName(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    @Override
+    public Optional<User> getByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
 }

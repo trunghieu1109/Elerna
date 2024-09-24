@@ -18,8 +18,11 @@ public class Token extends AbstractEntity<Long> {
     @Column(name="refresh_token")
     private String refreshToken;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.EAGER, orphanRemoval = false)
     @JoinColumn(name="user_id")
     private User user;
+
+    @JoinColumn(name="status")
+    private boolean status;
 
 }
