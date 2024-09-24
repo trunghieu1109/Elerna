@@ -24,4 +24,7 @@ public class Class extends AbstractEntity<Integer> {
     @OneToMany(mappedBy = "class_")
     private Set<RoleUserClass> roleUserClass = new HashSet<>();
 
+    @OneToMany(mappedBy = "class_")
+    private Set<ClassCourse> classCourses = new HashSet<>();
+
 }

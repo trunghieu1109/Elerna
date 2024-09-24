@@ -51,6 +51,18 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     @OneToMany(mappedBy = "user")
     private Set<RoleUserClass> roleUserClass = new HashSet<>();
 
+    @OneToMany(mappedBy = "user")
+    private Set<Transaction> transactions = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    private Set<UserCourse> userCourses = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    private Set<AssignmentSubmission> assignmentSubmissions = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    private Set<ContestSubmission> contestSubmissions = new HashSet<>();
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
