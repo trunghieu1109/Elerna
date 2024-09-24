@@ -23,7 +23,7 @@ public class Role extends AbstractEntity<Long> {
     private String description;
 
     @OneToMany(mappedBy = "role")
-    private Set<RoleUserClass> roleUserClasses = new HashSet<>();
+    private Set<RoleUserGroup> roleUserGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "role")
     private Set<RolePrivilege> rolePrivileges = new HashSet<>();

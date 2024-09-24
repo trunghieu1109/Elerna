@@ -49,7 +49,7 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     private Token token;
 
     @OneToMany(mappedBy = "user")
-    private Set<RoleUserClass> roleUserClass = new HashSet<>();
+    private Set<RoleUserGroup> roleUserClass = new HashSet<>();
 
     @OneToMany(mappedBy = "user")
     private Set<Transaction> transactions = new HashSet<>();

@@ -47,7 +47,7 @@ public class Course extends AbstractEntity<Long> {
     private Set<UserCourse> userCourses = new HashSet<>();
 
     @OneToMany(mappedBy = "course")
-    private Set<ClassCourse> classCourses = new HashSet<>();
+    private Set<GroupCourse> groupCourses = new HashSet<>();
 
     @OneToMany(mappedBy = "course")
     private Set<Lesson> lessons = new HashSet<>();

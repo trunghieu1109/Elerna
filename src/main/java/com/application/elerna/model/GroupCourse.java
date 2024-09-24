@@ -10,11 +10,11 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name="classes_courses")
-public class ClassCourse extends AbstractEntity<Long> {
+public class GroupCourse extends AbstractEntity<Long> {
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="class_id")
-    private Class class_;
+    @JoinColumn(name="group_id")
+    private Group group;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="course_id")

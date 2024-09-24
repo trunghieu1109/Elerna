@@ -10,7 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Entity
 @Table(name="roles_users_classes")
-public class RoleUserClass extends AbstractEntity<Long> {
+public class RoleUserGroup extends AbstractEntity<Long> {
 
     @Column(name="class_role")
     private String classRole;
@@ -23,8 +23,8 @@ public class RoleUserClass extends AbstractEntity<Long> {
     private User user;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="class_id")
-    private Class class_;
+    @JoinColumn(name="group_id")
+    private Group group;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="role_id")

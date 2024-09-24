@@ -15,16 +15,16 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="classes")
-public class Class extends AbstractEntity<Integer> {
+@Table(name="groups")
+public class Group extends AbstractEntity<Integer> {
 
     @Column(name="name")
     private String name;
 
-    @OneToMany(mappedBy = "class_")
-    private Set<RoleUserClass> roleUserClass = new HashSet<>();
+    @OneToMany(mappedBy = "group")
+    private Set<RoleUserGroup> roleUserGroups = new HashSet<>();
 
-    @OneToMany(mappedBy = "class_")
-    private Set<ClassCourse> classCourses = new HashSet<>();
+    @OneToMany(mappedBy = "group")
+    private Set<GroupCourse> groupCourses = new HashSet<>();
 
 }

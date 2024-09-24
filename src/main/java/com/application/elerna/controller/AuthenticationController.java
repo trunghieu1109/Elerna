@@ -59,7 +59,11 @@ public class AuthenticationController {
 
     @PostMapping("/forgot-password")
     public ResponseData<TokenResponse> forgotPassword(@RequestBody @Email @NotBlank String email) {
-        return new ResponseData<>(HttpStatus.ACCEPTED, "Forgot password request accepted", authenticationService.forgotPassword(email));
+        try {
+            return new ResponseData<>(HttpStatus.ACCEPTED, "Forgot password request accepted", authenticationService.forgotPassword(email));
+        } catch (Exception e) {
+            return new ResponseData<>(HttpStatus.BAD_REQUEST, "Can't send email");
+        }
     }
 
     @PostMapping("/confirm-reset")

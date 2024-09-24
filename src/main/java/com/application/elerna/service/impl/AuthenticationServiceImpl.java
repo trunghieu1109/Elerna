@@ -10,11 +10,9 @@ import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.Token;
 import com.application.elerna.model.User;
 import com.application.elerna.repository.TokenRepository;
-import com.application.elerna.service.AuthenticationService;
-import com.application.elerna.service.JwtService;
-import com.application.elerna.service.TokenService;
-import com.application.elerna.service.UserService;
+import com.application.elerna.service.*;
 import com.application.elerna.utils.TokenEnum;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +27,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +41,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
+    private final MailService mailService;
 
     @Override
     public TokenResponse signUp(SignUpRequest request) {
@@ -207,17 +207,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public TokenResponse forgotPassword(String email) {
+    public TokenResponse forgotPassword(String email) throws MessagingException, UnsupportedEncodingException {
         var user = userService.getByEmail(email).orElseThrow(() -> new ResourceNotFound("Cant get user by email: " + email));
 
         String resetToken = jwtService.generateResetToken(user.getUsername());
         Token token = user.getToken();
 
-        System.out.println(String.format("curl -X 'POST' \\\n" +
+        String url = String.format("curl -X 'POST' \\\n" +
                 "  'http://localhost/auth/confirm-reset' \\\n" +
                 "  -H 'accept: */*' \\\n" +
                 "  -H 'Content-Type: application/json' \\\n" +
-                "  -d '\"%s\"'", resetToken));
+                "  -d '\"%s\"'", resetToken);
+
+//        mailService.sendEmail("hieukunno1109@gmail.com", "Confirm Reset Password", url, null);
+
+        System.out.println(url);
 
         return TokenResponse.builder()
                 .accessToken(token.getAccessToken())
