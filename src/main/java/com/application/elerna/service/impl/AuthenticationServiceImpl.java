@@ -209,12 +209,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public TokenResponse forgotPassword(String email) {
         var user = userService.getByEmail(email).orElseThrow(() -> new ResourceNotFound("Cant get user by email: " + email));
-        if (!email.equals(user.getEmail())) {
-            throw new InvalidRequestData("Email is not matched");
-        }
 
         String resetToken = jwtService.generateResetToken(user.getUsername());
         Token token = user.getToken();
+
+        System.out.println(String.format("curl -X 'POST' \\\n" +
+                "  'http://localhost/auth/confirm-reset' \\\n" +
+                "  -H 'accept: */*' \\\n" +
+                "  -H 'Content-Type: application/json' \\\n" +
+                "  -d '\"%s\"'", resetToken));
 
         return TokenResponse.builder()
                 .accessToken(token.getAccessToken())
@@ -222,8 +225,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .resetToken(resetToken)
                 .userId(user.getId())
                 .build();
-
-
     }
 
     @Override
