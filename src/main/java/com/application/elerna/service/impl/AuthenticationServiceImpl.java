@@ -50,11 +50,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String username = request.getUsername();
 
         // check is existed username
-        List<UserDetail> users = userService.getAllUsers();
-        for (UserDetail user : users) {
-            if (username.equals(user.getUsername())) {
-                throw new InvalidRequestData("Username had been existed in database");
-            }
+        Optional<User> currentUser = userService.getByUserName(username);
+        if (!currentUser.isEmpty()) {
+            throw new InvalidRequestData("Username had been existed in database");
         }
 
         // create new user

@@ -1,9 +1,6 @@
 package com.application.elerna.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
@@ -43,11 +40,11 @@ public class Course extends AbstractEntity<Long> {
     @OneToMany(mappedBy = "course")
     private Set<Transaction> transactions = new HashSet<>();
 
-    @OneToMany(mappedBy = "course")
-    private Set<UserCourse> userCourses = new HashSet<>();
+    @ManyToMany(mappedBy = "courses")
+    private Set<User> users = new HashSet<>();
 
-    @OneToMany(mappedBy = "course")
-    private Set<GroupCourse> groupCourses = new HashSet<>();
+    @ManyToMany(mappedBy = "courses")
+    private Set<Team> teams = new HashSet<>();
 
     @OneToMany(mappedBy = "course")
     private Set<Lesson> lessons = new HashSet<>();

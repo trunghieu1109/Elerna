@@ -22,10 +22,35 @@ public class Role extends AbstractEntity<Long> {
     @Column(name="description")
     private String description;
 
-    @OneToMany(mappedBy = "role")
-    private Set<RoleUserGroup> roleUserGroups = new HashSet<>();
+    @ManyToMany(mappedBy = "roles")
+    private Set<Team> teams = new HashSet<>();
 
-    @OneToMany(mappedBy = "role")
-    private Set<RolePrivilege> rolePrivileges = new HashSet<>();
+    @ManyToMany
+    @JoinTable(
+            name="roles_privileges",
+            joinColumns = @JoinColumn(name="role_id"),
+            inverseJoinColumns = @JoinColumn(name="privilege_id")
+    )
+    private Set<Privilege> privileges = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name="roles_users_teams",
+            joinColumns = @JoinColumn(name="role_id"),
+            inverseJoinColumns = @JoinColumn(name="user_id")
+    )
+    private Set<User> users = new HashSet<>();
+
+    public void addTeam(Team team) {
+        this.teams.add(team);
+    }
+
+    public void addUser(User user) {
+        this.users.add(user);
+    }
+
+    public void addPrivilege(Privilege privilege) {
+        this.privileges.add(privilege);
+    }
 
 }

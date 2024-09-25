@@ -24,11 +24,14 @@ public class Privilege extends AbstractEntity<Long> {
     @Column(name="description")
     private String description;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="resource_type")
-    private ResourceType resourceType;
+    @Column(name="resource_type")
+    private String resourceType;
 
-    @OneToMany(mappedBy = "privilege")
-    private Set<RolePrivilege> rolePrivileges = new HashSet<>();
+    @ManyToMany(mappedBy = "privileges")
+    private Set<Role> roles = new HashSet<>();
+
+    public void addRole(Role role) {
+        this.roles.add(role);
+    }
 
 }

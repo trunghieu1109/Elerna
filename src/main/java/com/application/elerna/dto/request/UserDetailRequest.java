@@ -1,31 +1,26 @@
 package com.application.elerna.dto.request;
 
-
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
 import java.util.Date;
 
 @Getter
-public class SignUpRequest implements Serializable {
+@NoArgsConstructor
+public class UserDetailRequest implements Serializable {
 
-    @NotBlank(message = "Username must not blank")
-    private String username;
+    private Long userId;
 
-    @NotBlank(message = "Password must not blank")
-    private String password;
-
-    @NotBlank(message = "First name must not blank")
+    @NotBlank(message = "First name cant not be blank")
     private String firstName;
 
-    @NotBlank(message = "Last name must not blank")
+    @NotBlank(message = "Last name cant not be blank")
     private String lastName;
 
     @NotNull(message = "Date of birth must not null")
@@ -33,14 +28,15 @@ public class SignUpRequest implements Serializable {
     @JsonFormat(pattern = "MM/dd/yyyy")
     private Date dateOfBirth;
 
-    @Email
-    private String email;
-
-    @NotNull(message = "Phone must not be null")
-    private String phone;
-
+    @NotBlank(message = "Address is not blank")
     private String address;
 
+    @NotBlank(message = "Phone is not blank")
+    private String phone;
+
+    @Email
+    private String email;
+    
     private String cardNumber;
 
 }

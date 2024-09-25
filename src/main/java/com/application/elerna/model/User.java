@@ -48,20 +48,52 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Token token;
 
-    @OneToMany(mappedBy = "user")
-    private Set<RoleUserGroup> roleUserClass = new HashSet<>();
+    @ManyToMany(mappedBy = "users")
+    private Set<Team> teams = new HashSet<>();
 
     @OneToMany(mappedBy = "user")
     private Set<Transaction> transactions = new HashSet<>();
 
-    @OneToMany(mappedBy = "user")
-    private Set<UserCourse> userCourses = new HashSet<>();
+    @ManyToMany
+    @JoinTable(
+            name="users_courses",
+            joinColumns = @JoinColumn(name="user_id"),
+            inverseJoinColumns = @JoinColumn(name="course_id")
+    )
+    private Set<Course> courses = new HashSet<>();
 
     @OneToMany(mappedBy = "user")
     private Set<AssignmentSubmission> assignmentSubmissions = new HashSet<>();
 
     @OneToMany(mappedBy = "user")
     private Set<ContestSubmission> contestSubmissions = new HashSet<>();
+
+    @ManyToMany(mappedBy = "users")
+    private Set<Role> roles = new HashSet<>();
+
+    public void addTransaction(Transaction transaction) {
+        this.transactions.add(transaction);
+    }
+
+    public void addTeam(Team team) {
+        this.teams.add(team);
+    }
+
+    public void addRole(Role role) {
+        this.roles.add(role);
+    }
+
+    public void addCourse(Course course) {
+        this.courses.add(course);
+    }
+
+    public void addAssigmentSubmission(AssignmentSubmission assignmentSubmission) {
+        this.assignmentSubmissions.add(assignmentSubmission);
+    }
+
+    public void addContestSubmission(ContestSubmission contestSubmission) {
+        this.contestSubmissions.add(contestSubmission);
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
