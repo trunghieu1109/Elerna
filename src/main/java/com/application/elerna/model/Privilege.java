@@ -27,7 +27,7 @@ public class Privilege extends AbstractEntity<Long> {
     @Column(name="resource_type")
     private String resourceType;
 
-    @ManyToMany(mappedBy = "privileges")
+    @ManyToMany(mappedBy = "privileges", fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
 
     public void addRole(Role role) {

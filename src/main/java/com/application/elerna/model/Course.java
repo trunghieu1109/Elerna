@@ -37,28 +37,60 @@ public class Course extends AbstractEntity<Long> {
     @Column(name="price")
     private Double price;
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
     private Set<Transaction> transactions = new HashSet<>();
 
-    @ManyToMany(mappedBy = "courses")
+    @ManyToMany(mappedBy = "courses", fetch = FetchType.EAGER)
     private Set<User> users = new HashSet<>();
 
-    @ManyToMany(mappedBy = "courses")
+    @ManyToMany(mappedBy = "courses", fetch = FetchType.EAGER)
     private Set<Team> teams = new HashSet<>();
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
     private Set<Lesson> lessons = new HashSet<>();
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
     private Set<Assignment> assignments = new HashSet<>();
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
     private Set<Contest> contests = new HashSet<>();
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
     private Set<AssignmentSubmission> assignmentSubmissions = new HashSet<>();
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
     private Set<ContestSubmission> contestSubmissions = new HashSet<>();
+
+    public void addTransaction(Transaction transaction) {
+        transactions.add(transaction);
+    }
+
+    public void addUser(User user) {
+        users.add(user);
+    }
+
+    public void addTeam(Team team) {
+        teams.add(team);
+    }
+
+    public void addLesson(Lesson lesson) {
+        lessons.add(lesson);
+    }
+
+    public void addAssignment(Assignment assignment) {
+        assignments.add(assignment);
+    }
+
+    public void addContest(Contest contest) {
+        contests.add(contest);
+    }
+
+    public void addAssignmentSubmission(AssignmentSubmission assignmentSubmission) {
+        assignmentSubmissions.add(assignmentSubmission);
+    }
+
+    public void addContestSubmission(ContestSubmission contestSubmission) {
+        contestSubmissions.add(contestSubmission);
+    }
 
 }

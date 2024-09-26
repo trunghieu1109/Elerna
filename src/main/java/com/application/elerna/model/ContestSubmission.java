@@ -17,7 +17,7 @@ public class ContestSubmission extends AbstractEntity<Long> {
     private User user;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="assignment_id")
+    @JoinColumn(name="contest_id")
     private Contest contest;
 
     @ManyToOne(fetch = FetchType.EAGER)

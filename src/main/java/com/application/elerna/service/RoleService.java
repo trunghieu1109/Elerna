@@ -8,4 +8,8 @@ public interface RoleService {
 
     public Role createRole(String roleName, String resourceType, Long resouceId);
 
+    public Role getRoleByName(String name);
+
+    public void saveRole(Role role);
+
 }

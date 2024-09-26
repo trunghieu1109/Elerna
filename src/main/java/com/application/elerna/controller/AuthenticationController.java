@@ -62,7 +62,7 @@ public class AuthenticationController {
         try {
             return new ResponseData<>(HttpStatus.ACCEPTED, "Forgot password request accepted", authenticationService.forgotPassword(email));
         } catch (Exception e) {
-            return new ResponseData<>(HttpStatus.BAD_REQUEST, "Can't send email");
+            return new ResponseData<>(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 

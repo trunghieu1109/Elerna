@@ -1,5 +1,6 @@
 package com.application.elerna.model;
 
+import com.application.elerna.utils.CustomizedGrantedAuthority;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -29,6 +30,9 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     @Column(name="email")
     private String email;
 
+    @Column(name="system_role")
+    private String systemRole;
+
     @Column(name="username")
     private String username;
 
@@ -44,17 +48,20 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     @Column(name="card_number")
     private String cardNumber;
 
+    @Column(name="is_active")
+    private boolean isActive;
+
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Token token;
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany(mappedBy = "users", fetch = FetchType.EAGER)
     private Set<Team> teams = new HashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private Set<Transaction> transactions = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name="users_courses",
             joinColumns = @JoinColumn(name="user_id"),
@@ -62,13 +69,13 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     )
     private Set<Course> courses = new HashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private Set<AssignmentSubmission> assignmentSubmissions = new HashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private Set<ContestSubmission> contestSubmissions = new HashSet<>();
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany(mappedBy = "users", fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
 
     public void addTransaction(Transaction transaction) {
@@ -97,7 +104,8 @@ public class User extends AbstractEntity<Long> implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+
+        return this.roles.stream().map(role -> new CustomizedGrantedAuthority(role)).toList();
     }
 
     @Override

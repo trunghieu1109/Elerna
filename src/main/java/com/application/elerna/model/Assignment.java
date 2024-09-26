@@ -33,7 +33,11 @@ public class Assignment extends AbstractEntity<Long> {
     @JoinColumn(name="content_id")
     private Content content;
 
-    @OneToMany(mappedBy = "assignment")
+    @OneToMany(mappedBy = "assignment", fetch = FetchType.EAGER)
     private Set<AssignmentSubmission> assignmentSubmissions = new HashSet<>();
+
+    public void addAssignmentSubmission(AssignmentSubmission assignmentSubmission) {
+        assignmentSubmissions.add(assignmentSubmission);
+    }
 
 }

@@ -22,10 +22,10 @@ public class Role extends AbstractEntity<Long> {
     @Column(name="description")
     private String description;
 
-    @ManyToMany(mappedBy = "roles")
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.EAGER)
     private Set<Team> teams = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name="roles_privileges",
             joinColumns = @JoinColumn(name="role_id"),
@@ -33,7 +33,7 @@ public class Role extends AbstractEntity<Long> {
     )
     private Set<Privilege> privileges = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name="roles_users_teams",
             joinColumns = @JoinColumn(name="role_id"),

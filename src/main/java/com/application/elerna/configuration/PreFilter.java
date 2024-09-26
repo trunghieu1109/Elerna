@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -62,7 +63,7 @@ public class PreFilter extends OncePerRequestFilter {
 
         // validate access token
         if (!jwtService.isValid(token, TokenEnum.ACCESS_TOKEN, userDetails.get())) {
-            log.error("PreFilter: Token is invalid");
+            log.error("PreFilter: Token is invalid or user is inactive");
             filterChain.doFilter(request, response);
             return;
         }
@@ -80,6 +81,10 @@ public class PreFilter extends OncePerRequestFilter {
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         securityContext.setAuthentication(authenticationToken);
         SecurityContextHolder.setContext(securityContext);
+
+//        for (GrantedAuthority authority : SecurityContextHolder.getContext().getAuthentication().getAuthorities()) {
+//            log.info(authority.getAuthority());
+//        }
 
         filterChain.doFilter(request, response);
     }

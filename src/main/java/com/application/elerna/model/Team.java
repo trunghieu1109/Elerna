@@ -18,15 +18,18 @@ public class Team extends AbstractEntity<Long> {
     @Column(name="name")
     private String name;
 
-    @ManyToMany
+    @Column(name="is_active")
+    private boolean isActive;
+
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name="teams_courses",
             joinColumns = @JoinColumn(name="team_id"),
-            inverseJoinColumns = @JoinColumn(name="course_id")
+            inverseJoinColumns = @JoinColumn(name="coures_id")
     )
     private Set<Course> courses = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name="roles_users_teams",
             joinColumns = @JoinColumn(name="team_id"),
@@ -34,7 +37,7 @@ public class Team extends AbstractEntity<Long> {
     )
     private Set<Role> roles = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name="roles_users_teams",
             joinColumns = @JoinColumn(name="team_id"),

@@ -2,6 +2,7 @@ package com.application.elerna.service.impl;
 
 import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.model.Token;
+import com.application.elerna.model.User;
 import com.application.elerna.service.JwtService;
 import com.application.elerna.utils.TokenEnum;
 import io.jsonwebtoken.Claims;
@@ -116,6 +117,12 @@ public class JwtServiceImpl implements JwtService {
     public boolean isValid(String token, TokenEnum type, UserDetails user) {
 
         String username = extractUsername(token, type);
+
+        if (user instanceof User) {
+            if (!((User) user).isActive()) {
+                return false;
+            }
+        }
 
         return username.equals(user.getUsername()) && !isExpired(token, type);
     }

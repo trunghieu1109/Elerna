@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="assignments")
+@Table(name="assign_submissions")
 public class AssignmentSubmission extends AbstractEntity<Long> {
 
     @ManyToOne(fetch = FetchType.EAGER)

@@ -8,4 +8,6 @@ public interface PrivilegeService {
 
     Privilege createPrivilege(String type, Long id, String action, String description);
 
+    void savePrivilege(Privilege privilege);
+
 }

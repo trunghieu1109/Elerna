@@ -5,11 +5,17 @@ import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
+import com.application.elerna.model.Privilege;
+import com.application.elerna.model.Role;
+import com.application.elerna.model.Team;
 import com.application.elerna.model.User;
 import com.application.elerna.repository.UserRepository;
 import com.application.elerna.repository.UtilsRepository;
 import com.application.elerna.service.MailService;
+import com.application.elerna.service.PrivilegeService;
+import com.application.elerna.service.RoleService;
 import com.application.elerna.service.UserService;
+import com.application.elerna.utils.CustomizedGrantedAuthority;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -17,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
@@ -33,14 +40,19 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UtilsRepository utilsRepository;
+    private final PrivilegeService privilegeService;
+    private final RoleService roleService;
 
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFound("Can't get user by username: " + username.toString()));
+        return username ->
+           userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFound("Can't get user by username: " + username.toString()));
     }
 
     public PageResponse<?> getAllUsersBySort(Integer pageNo, Integer pageSize, String... sortBy) {
 
-        Pageable pageable = null;;
+        Pageable pageable = null;
+
+//        log.info("Get all users by sort");
 
         String strPattern = "(\\w+?)(:)(.*)";
 
@@ -121,6 +133,49 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void addProfileRole(User user) {
+        userRepository.save(user);
+
+        var currentUser = getByUserName(user.getUsername());
+
+        Privilege priView = privilegeService.createPrivilege("profile", currentUser.get().getId(), "view", "View profile, id = " + currentUser.get().getId());
+        Privilege priUpdate = privilegeService.createPrivilege("profile", currentUser.get().getId(), "update", "Update profile, id = " + currentUser.get().getId());
+        Privilege priDelete = privilegeService.createPrivilege("profile", currentUser.get().getId(), "delete", "Delete profile, id = " + currentUser.get().getId());
+
+        Role roleAdmin = roleService.createRole("ADMIN", "profile", currentUser.get().getId());
+
+        roleAdmin.addPrivilege(priView);
+        roleAdmin.addPrivilege(priUpdate);
+        roleAdmin.addPrivilege(priDelete);
+
+        priView.addRole(roleAdmin);
+        priDelete.addRole(roleAdmin);
+        priUpdate.addRole(roleAdmin);
+
+        user.addRole(roleAdmin);
+        roleAdmin.addUser(user);
+
+        privilegeService.savePrivilege(priView);
+        privilegeService.savePrivilege(priDelete);
+        privilegeService.savePrivilege(priUpdate);
+
+        roleService.saveRole(roleAdmin);
+    }
+
+    public void addSystemAdminRole(User user) {
+
+        userRepository.save(user);
+
+        Role roleSysAdmin = roleService.createRole("SYSTEM_ADMIN", "*", -1L);
+        user.addRole(roleSysAdmin);
+        roleSysAdmin.addUser(user);
+
+        roleService.saveRole(roleSysAdmin);
+    }
+
+
+
+    @Override
     public Optional<User> getByUserName(String username) {
         return userRepository.findByUsername(username);
     }
@@ -178,7 +233,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public String deleteUser(Long userId) {
         var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFound("Cant find user with userId: " + userId));
-        userRepository.delete(user);
+
+        user.setActive(false);
+        user.setUsername(user.getUsername() + "-Deleted");
+
+        userRepository.save(user);
 
         log.info("Delete user successfully, userId: " + userId);
 

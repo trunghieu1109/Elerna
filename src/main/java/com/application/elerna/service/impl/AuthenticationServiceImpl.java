@@ -4,31 +4,24 @@ import com.application.elerna.dto.request.ResetPasswordRequest;
 import com.application.elerna.dto.request.SignInRequest;
 import com.application.elerna.dto.request.SignUpRequest;
 import com.application.elerna.dto.response.TokenResponse;
-import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
+import com.application.elerna.model.Role;
 import com.application.elerna.model.Token;
 import com.application.elerna.model.User;
-import com.application.elerna.repository.TokenRepository;
 import com.application.elerna.service.*;
 import com.application.elerna.utils.TokenEnum;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.UnsupportedEncodingException;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
 
 @Slf4j
@@ -42,6 +35,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
     private final MailService mailService;
+    private final RoleService roleService;
 
     @Override
     public TokenResponse signUp(SignUpRequest request) {
@@ -67,6 +61,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .address(request.getAddress())
+                .systemRole(request.getSystemRole())
+                .isActive(true)
+                .assignmentSubmissions(new HashSet<>())
+                .teams(new HashSet<>())
+                .roles(new HashSet<>())
+                .contestSubmissions(new HashSet<>())
+                .courses(new HashSet<>())
+                .transactions(new HashSet<>())
                 .build();
 
         // create new token
@@ -85,6 +87,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         user.setToken(token);
         token.setUser(user);
+
+        log.info("Add global role to user");
+        addGlobalRole(user);
+
+        if (request.getSystemRole().equals("user")) {
+            log.info("Add profile management role");
+            userService.addProfileRole(user);
+        } else {
+            log.info("Add system admin role");
+            userService.addSystemAdminRole(user);
+        }
 
         log.info("Save user");
         userService.saveUser(user);
@@ -110,6 +123,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Get user entity
         var user = userService.getByUserName(username).orElseThrow(() -> new ResourceNotFound("Can't get user with username"));
+
+        if (!user.isActive()) {
+            throw new InvalidRequestData("User is inactive");
+        }
 
         Token token = tokenService.getById(user.getToken().getId());
         log.info("Token id: " + token.getId());
@@ -208,6 +225,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public TokenResponse forgotPassword(String email) throws MessagingException, UnsupportedEncodingException {
         var user = userService.getByEmail(email).orElseThrow(() -> new ResourceNotFound("Cant get user by email: " + email));
 
+        if (!user.isActive()) {
+            throw new InvalidRequestData("Email is matched with inactive user");
+        }
+
         String resetToken = jwtService.generateResetToken(user.getUsername());
         Token token = user.getToken();
 
@@ -277,5 +298,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         userService.saveUser(user);
 
         return "Change password successfully";
+    }
+
+    private void addGlobalRole(User user) {
+        Role global_team_add = roleService.getRoleByName("GLOBAL_TEAM_ADD");
+        Role global_team_view = roleService.getRoleByName("GLOBAL_TEAM_VIEW");
+        Role global_course_add = roleService.getRoleByName("GLOBAL_COURSE_ADD");
+        Role global_course_view = roleService.getRoleByName("GLOBAL_COURSE_VIEW");
+        Role global_transaction_add = roleService.getRoleByName("GLOBAL_TRANSACTION_ADD");
+
+        user.addRole(global_course_add);
+        global_course_add.addUser(user);
+
+        user.addRole(global_transaction_add);
+        global_transaction_add.addUser(user);
+
+        user.addRole(global_team_add);
+        global_team_add.addUser(user);
+
+        user.addRole(global_course_view);
+        global_course_view.addUser(user);
+
+        user.addRole(global_team_view);
+        global_team_view.addUser(user);
     }
 }

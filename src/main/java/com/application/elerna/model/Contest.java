@@ -36,7 +36,11 @@ public class Contest extends AbstractEntity<Long> {
     @JoinColumn(name="content_id")
     private Content content;
 
-    @OneToMany(mappedBy = "contest")
+    @OneToMany(mappedBy = "contest", fetch = FetchType.EAGER)
     private Set<ContestSubmission> contestSubmissions = new HashSet<>();
+
+    public void addContestSubmission(ContestSubmission contestSubmission) {
+        contestSubmissions.add(contestSubmission);
+    }
 
 }

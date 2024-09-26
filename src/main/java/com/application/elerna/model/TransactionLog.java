@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="transactions_logs")
+@Table(name="transactions_log")
 public class TransactionLog extends AbstractEntity<Long> {
 
     @Column(name="message_type")

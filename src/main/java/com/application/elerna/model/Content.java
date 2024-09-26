@@ -1,9 +1,6 @@
 package com.application.elerna.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
@@ -21,19 +18,19 @@ public class Content extends AbstractEntity<Long> {
     @Column(name="path")
     private String path;
 
-    @OneToOne(mappedBy = "content")
+    @OneToOne(mappedBy = "content", fetch = FetchType.EAGER)
     private Lesson lesson;
 
-    @OneToOne(mappedBy = "content")
+    @OneToOne(mappedBy = "content", fetch = FetchType.EAGER)
     private Assignment assignment;
 
-    @OneToOne(mappedBy = "content")
+    @OneToOne(mappedBy = "content", fetch = FetchType.EAGER)
     private Contest contest;
 
-    @OneToOne(mappedBy = "content")
+    @OneToOne(mappedBy = "content", fetch = FetchType.EAGER)
     private AssignmentSubmission assignmentSubmission;
 
-    @OneToOne(mappedBy = "content")
+    @OneToOne(mappedBy = "content", fetch = FetchType.EAGER)
     private ContestSubmission contestSubmission;
 
 

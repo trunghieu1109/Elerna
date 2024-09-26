@@ -27,4 +27,10 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 .build();
     }
 
+    @Override
+    public void savePrivilege(Privilege privilege) {
+        privilegeRepository.save(privilege);
+        privilegeRepository.flush();
+    }
+
 }

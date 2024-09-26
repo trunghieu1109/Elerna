@@ -1,5 +1,6 @@
 package com.application.elerna.repository;
 
+import com.application.elerna.model.Team;
 import com.application.elerna.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -43,7 +44,7 @@ public class UtilsRepository {
 
         Query selectQuery = entityManager.createQuery(query.toString());
 
-        Long totalPages = (long) selectQuery.getResultList().size();
+        Long totalPages = (long) selectQuery.getResultList().size() / pageSize;
 
         selectQuery.setFirstResult(pageNo * pageSize);
         selectQuery.setMaxResults((pageNo + 1) * pageSize);
@@ -53,6 +54,25 @@ public class UtilsRepository {
         Page<User> page = new PageImpl<User>(users, PageRequest.of(pageNo, pageSize), totalPages);
 
         return page;
+    }
+
+    public Page<Team> findTeamByName(Integer pageNo, Integer pageSize, String searchBy) {
+        StringBuilder query = new StringBuilder("select t from Team t where t.name like lower(\"%" + searchBy + "%\") and t.isActive = TRUE");
+
+        Query selectQuery = entityManager.createQuery(query.toString());
+
+        int size_ = selectQuery.getResultList().size();
+
+        int totalPages = size_;
+
+        selectQuery.setFirstResult(pageNo * pageSize);
+        selectQuery.setMaxResults(pageSize);
+        List<Team> teams = selectQuery.getResultList();
+
+        Page<Team> page = new PageImpl<Team>(teams, PageRequest.of(pageNo, pageSize), totalPages);
+
+        return page;
+
     }
 
 }

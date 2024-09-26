@@ -35,7 +35,7 @@ public class Transaction extends AbstractEntity<Long> {
     @JoinColumn(name="course_id")
     private Course course;
 
-    @OneToMany(mappedBy = "transaction")
+    @OneToMany(mappedBy = "transaction", fetch = FetchType.EAGER)
     private Set<TransactionLog> transactionLogs = new HashSet<>();
 
 }

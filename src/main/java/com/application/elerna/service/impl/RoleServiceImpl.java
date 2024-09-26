@@ -26,4 +26,16 @@ public class RoleServiceImpl implements RoleService {
                 .users(new HashSet<>())
                 .build();
     }
+
+    @Override
+    public Role getRoleByName(String name) {
+        return roleRepository.findByName(name);
+    }
+
+    public void saveRole(Role role) {
+        roleRepository.save(role);
+        roleRepository.flush();
+    }
+
+
 }
