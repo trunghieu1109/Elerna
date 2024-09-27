@@ -1,6 +1,7 @@
 package com.application.elerna.controller;
 
 import com.application.elerna.dto.request.AddCourseRequest;
+import com.application.elerna.dto.request.UpdateCourseRequest;
 import com.application.elerna.dto.response.CourseRequestResponse;
 import com.application.elerna.dto.response.CourseResponse;
 import com.application.elerna.dto.response.PageResponse;
@@ -61,6 +62,28 @@ public class CourseController {
     public ResponseData<CourseResponse> getCourseDetail(Long courseId) {
 
         return new ResponseData<>(HttpStatus.OK, "Get course details, courseId: " + courseId, courseService.getCourseDetail(courseId));
+    }
+
+    @PostMapping("/register")
+    public ResponseData<String> registerCourse(@RequestParam Long userId, @RequestParam Long courseId) {
+        return new ResponseData<>(HttpStatus.ACCEPTED, courseService.registerCourse(userId, courseId));
+    }
+
+    @GetMapping("/registered/user")
+    public PageResponse<?> getAllRegisteredCourse(@RequestParam Long userId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+
+        return courseService.getAllRegisteredCourse(userId, pageNo, pageSize);
+    }
+
+    @PostMapping("/update")
+    public ResponseData<String> updateCourse(@RequestBody UpdateCourseRequest request) {
+        return new ResponseData<>(HttpStatus.ACCEPTED, courseService.updateCourse(request));
+    }
+
+    @GetMapping("/student-list")
+    public PageResponse<?> getAllStudentList(@RequestParam Long courseId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+
+        return courseService.getAllStudentList(courseId, pageNo, pageSize);
     }
 
 }

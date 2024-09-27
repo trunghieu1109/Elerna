@@ -40,4 +40,6 @@ public interface UserService {
     @PreAuthorize("hasPermission(#userId, 'profile', 'delete')")
     public String deleteUser(Long userId);
 
+    public UserDetail createUserDetail(User user);
+
 }

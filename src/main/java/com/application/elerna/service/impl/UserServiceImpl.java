@@ -244,4 +244,19 @@ public class UserServiceImpl implements UserService {
         return "Delete user successfully";
     }
 
+    @Override
+    public UserDetail createUserDetail(User user) {
+        return UserDetail.builder()
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .address(user.getAddress())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .cardNumber(user.getCardNumber())
+                .dateOfBirth(user.getDateOfBirth())
+                .username("Username is hidden")
+                .password("Password is hidden")
+                .build();
+    }
+
 }

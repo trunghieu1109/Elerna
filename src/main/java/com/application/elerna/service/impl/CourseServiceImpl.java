@@ -1,16 +1,15 @@
 package com.application.elerna.service.impl;
 
 import com.application.elerna.dto.request.AddCourseRequest;
+import com.application.elerna.dto.request.UpdateCourseRequest;
 import com.application.elerna.dto.response.CourseRequestResponse;
 import com.application.elerna.dto.response.CourseResponse;
 import com.application.elerna.dto.response.PageResponse;
+import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.*;
-import com.application.elerna.repository.CourseRepository;
-import com.application.elerna.repository.CourseRequestRepository;
-import com.application.elerna.repository.UserRepository;
-import com.application.elerna.repository.UtilsRepository;
+import com.application.elerna.repository.*;
 import com.application.elerna.service.CourseService;
 import com.application.elerna.service.PrivilegeService;
 import com.application.elerna.service.RoleService;
@@ -24,10 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.sql.Time;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -40,6 +36,8 @@ public class CourseServiceImpl implements CourseService {
     private final PrivilegeService privilegeService;
     private final RoleService roleService;
     private final UtilsRepository utilsRepository;
+    private final RoleRepository roleRepository;
+    private final UserService userService;
 
     @Override
     public String addCourseRequest(AddCourseRequest request) {
@@ -164,19 +162,7 @@ public class CourseServiceImpl implements CourseService {
                 .pageSize(pageSize)
                 .totalPages(courses.getTotalPages())
                 .data(courses.stream().map(course ->
-                        CourseResponse.builder()
-                                .name(course.getName())
-                                .duration(course.getDuration())
-                                .price(course.getPrice())
-                                .rating(course.getRating())
-                                .major(course.getMajor())
-                                .id(course.getId())
-                                .description(course.getDescription())
-                                .language(course.getLanguage())
-                                .assignments(course.getAssignments().stream().map(assign->assign.getName()).toList())
-                                .lessons(course.getAssignments().stream().map(lesson->lesson.getName()).toList())
-                                .contests(course.getContests().stream().map(contest -> contest.getName()).toList())
-                                .build()))
+                        createCourseResponses(course)))
                 .build();
     }
 
@@ -191,6 +177,10 @@ public class CourseServiceImpl implements CourseService {
 
         Course course = course_.get();
 
+        return createCourseResponses(course);
+    }
+
+    private CourseResponse createCourseResponses(Course course) {
         return CourseResponse.builder()
                 .name(course.getName())
                 .duration(course.getDuration())
@@ -203,6 +193,128 @@ public class CourseServiceImpl implements CourseService {
                 .assignments(course.getAssignments().stream().map(assign->assign.getName()).toList())
                 .lessons(course.getAssignments().stream().map(lesson->lesson.getName()).toList())
                 .contests(course.getContests().stream().map(contest -> contest.getName()).toList())
+                .build();
+    }
+
+    @Override
+    public String registerCourse(Long userId, Long courseId) {
+
+        var user = userRepository.findById(userId);
+
+        if (user.isEmpty() || !user.get().isActive()) {
+            throw new InvalidRequestData("User not existed or invalid");
+        }
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty()) {
+            throw new InvalidRequestData("Course not existed");
+        }
+
+        user.get().addCourse(course.get());
+        course.get().addUser(user.get());
+
+        courseRepository.save(course.get());
+        userRepository.save(user.get());
+
+        var role = roleRepository.findByName("VIEWER_COURSE_" + course.get().getId());
+
+        if (role == null) {
+            throw new InvalidRequestData("Role not existed");
+        }
+
+        role.addUser(user.get());
+        user.get().addRole(role);
+
+        roleRepository.save(role);
+        userRepository.save(user.get());
+
+        return "Register Course " + courseId;
+    }
+
+    @Override
+    public PageResponse<?> getAllRegisteredCourse(Long userId, Integer pageNo, Integer pageSize) {
+
+        var user = userRepository.findById(userId);
+
+        if (user.isEmpty() || !user.get().isActive()) {
+            throw new InvalidRequestData("User is not existed or invalid");
+        }
+
+        List<Course> courses = new ArrayList<>(user.get().getCourses().stream().toList());
+
+        Collections.sort(courses, new Comparator<Course>() {
+            @Override
+            public int compare(Course o1, Course o2) {
+
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages((int) Math.ceil(courses.size() * 1.0 / pageSize))
+                .data(courses.subList(Math.max(pageNo * pageSize, 0),
+                        Math.min((pageNo + 1) * pageSize, courses.size()))
+                        .stream().map(course -> createCourseResponses(course)))
+                .build();
+    }
+
+    @Override
+    public String updateCourse(UpdateCourseRequest request) {
+
+        Long courseId = request.getCourseId();
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty()) {
+            throw new ResourceNotFound("Course doesnot exist in database");
+        }
+
+        Course currentCourse = course.get();
+
+        currentCourse.setName(request.getName());
+        currentCourse.setMajor(request.getMajor());
+        currentCourse.setLanguage(request.getLanguage());
+        currentCourse.setDescription(request.getDescription());
+        currentCourse.setDuration(request.getDuration());
+        currentCourse.setRating(request.getRating());
+        currentCourse.setPrice(request.getPrice());
+
+        courseRepository.save(currentCourse);
+
+        return "Update course " + courseId + " successfully";
+    }
+
+    @Override
+    public PageResponse<?> getAllStudentList(Long courseId, Integer pageNo, Integer pageSize) {
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty()) {
+            throw new InvalidRequestData("Course is not existed");
+        }
+
+        List<User> users = new ArrayList<>(course.get().getUsers().stream().toList());
+
+        Collections.sort(users, new Comparator<User>() {
+            @Override
+            public int compare(User o1, User o2) {
+
+                return o1.getUsername().compareTo(o2.getUsername());
+            }
+        });
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages((int) Math.ceil(users.size() * 1.0 / pageSize))
+                .data(users.subList(Math.max(pageNo * pageSize, 0),
+                                Math.min((pageNo + 1) * pageSize, users.size()))
+                        .stream().map(user -> userService.createUserDetail(user)))
                 .build();
     }
 
