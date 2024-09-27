@@ -231,24 +231,17 @@ public class TeamServiceImpl implements TeamService {
             throw new ResourceNotFound("Teams doesnot contain user");
         }
 
-        user.getTeams().remove(team);
-        team.getUsers().remove(user);
+        userRepository.removeUserTeam(userId, teamId);
 
-        userRepository.save(user);
-        teamRepository.save(team);
 
-//        Set<Role> roles = currentUser.get().getRoles();
-//
-//        for (Role role : roles) {
-//            if (role.getName().contains("TEAM") && role.getName().contains("" + currentTeam.get().getId())) {
-//                currentUser.get().getRoles().remove(role);
-//                role.getUsers().remove(currentUser);
-//
-//                roleRepository.save(role);
-//                userRepository.save(currentUser.get());
-//
-//            }
-//        }
+        Set<Role> roles = currentUser.get().getRoles();
+
+        for (Role role : roles) {
+            if (role.getName().contains("TEAM") && role.getName().contains("" + currentTeam.get().getId())) {
+                userRepository.removeUserRole(userId, role.getId());
+
+            }
+        }
 
 
 
