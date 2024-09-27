@@ -1,5 +1,6 @@
 package com.application.elerna.repository;
 
+import com.application.elerna.model.Course;
 import com.application.elerna.model.Team;
 import com.application.elerna.model.User;
 import jakarta.persistence.EntityManager;
@@ -47,7 +48,7 @@ public class UtilsRepository {
         Long totalPages = (long) selectQuery.getResultList().size() / pageSize;
 
         selectQuery.setFirstResult(pageNo * pageSize);
-        selectQuery.setMaxResults((pageNo + 1) * pageSize);
+        selectQuery.setMaxResults(pageSize);
 
         List<User> users = selectQuery.getResultList();
 
@@ -74,5 +75,40 @@ public class UtilsRepository {
         return page;
 
     }
+
+    public Page<Course> findCourseBySearchCriteria(Integer pageNo, Integer pageSize, String... searchBy) {
+
+        StringBuilder query = new StringBuilder("select c from Course c where 1 = 1");
+
+        if (searchBy != null) {
+            for (String criteria : searchBy) {
+                String regex = "(\\w+?)(:)(.*)";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(criteria);
+
+                if (matcher.find()) {
+                    String addition = " and c." + matcher.group(1) + " like lower(\"%" + matcher.group(3) + "%\")";
+                    log.info("Addition Criteria: " + addition);
+                    query.append(addition);
+                }
+            }
+        }
+
+        Query selectQuery = entityManager.createQuery(query.toString());
+
+//        Long totalPages = (long) ;
+
+        int size_ = selectQuery.getResultList().size();
+
+        selectQuery.setFirstResult(pageNo * pageSize);
+        selectQuery.setMaxResults(pageSize);
+
+        List<Course> courses = selectQuery.getResultList();
+
+        Page<Course> page = new PageImpl<Course>(courses, PageRequest.of(pageNo, pageSize), size_);
+//        log.info(((long) Math.ceil(size_ * 1.0 / pageSize)) + " " + size_ + " " + pageSize);
+        return page;
+    }
+
 
 }

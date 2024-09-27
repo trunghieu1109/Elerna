@@ -78,6 +78,9 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     @ManyToMany(mappedBy = "users", fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    private Set<CourseRequest> courseRequests = new HashSet<>();
+
     public void addTransaction(Transaction transaction) {
         this.transactions.add(transaction);
     }
@@ -100,6 +103,10 @@ public class User extends AbstractEntity<Long> implements UserDetails {
 
     public void addContestSubmission(ContestSubmission contestSubmission) {
         this.contestSubmissions.add(contestSubmission);
+    }
+
+    public void addCourseRequest(CourseRequest courseRequest) {
+        this.courseRequests.add(courseRequest);
     }
 
     @Override

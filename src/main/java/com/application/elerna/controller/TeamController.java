@@ -57,4 +57,9 @@ public class TeamController {
         return new ResponseData<>(HttpStatus.OK, teamService.joinTeam(userId, teamId));
     }
 
+    @PostMapping("/out/{teamId}")
+    public ResponseData<String> outTeam(Long userId, @PathVariable("teamId") Long teamId) {
+        return new ResponseData<>(HttpStatus.OK, teamService.outTeam(userId, teamId));
+    }
+
 }

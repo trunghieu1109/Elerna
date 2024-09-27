@@ -4,6 +4,7 @@ import com.application.elerna.dto.request.TeamRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.TeamResponse;
 import com.application.elerna.exception.InvalidRequestData;
+import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.Privilege;
 import com.application.elerna.model.Role;
 import com.application.elerna.model.Team;
@@ -22,10 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -205,6 +203,56 @@ public class TeamServiceImpl implements TeamService {
         }
 
         return "User " + userId + " joins team successfully";
+    }
+
+    @Override
+    public String outTeam(Long userId, Long teamId) {
+
+        var currentUser = userRepository.findById(userId);
+
+        if (currentUser == null || currentUser.isEmpty() || !currentUser.get().isActive()) {
+            throw new InvalidRequestData("UserId is invalid, not existed or inactive");
+        }
+
+        var currentTeam = teamRepository.findById(teamId);
+
+        if (currentTeam == null || currentTeam.isEmpty() || !currentTeam.get().isActive()) {
+            throw new InvalidRequestData("TeamId is invalid, not existed or inactive " + teamId);
+        }
+
+        Team team = currentTeam.get();
+        User user = currentUser.get();
+
+        if (!user.getTeams().contains(team)) {
+            throw new ResourceNotFound("User not in teams");
+        }
+
+        if (!team.getUsers().contains(user)) {
+            throw new ResourceNotFound("Teams doesnot contain user");
+        }
+
+        user.getTeams().remove(team);
+        team.getUsers().remove(user);
+
+        userRepository.save(user);
+        teamRepository.save(team);
+
+//        Set<Role> roles = currentUser.get().getRoles();
+//
+//        for (Role role : roles) {
+//            if (role.getName().contains("TEAM") && role.getName().contains("" + currentTeam.get().getId())) {
+//                currentUser.get().getRoles().remove(role);
+//                role.getUsers().remove(currentUser);
+//
+//                roleRepository.save(role);
+//                userRepository.save(currentUser.get());
+//
+//            }
+//        }
+
+
+
+        return "User has out of team";
     }
 
     public void saveTeam(Team team, User user) {

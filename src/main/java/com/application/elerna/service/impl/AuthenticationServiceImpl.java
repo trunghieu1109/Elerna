@@ -69,6 +69,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .contestSubmissions(new HashSet<>())
                 .courses(new HashSet<>())
                 .transactions(new HashSet<>())
+                .courseRequests(new HashSet<>())
                 .build();
 
         // create new token

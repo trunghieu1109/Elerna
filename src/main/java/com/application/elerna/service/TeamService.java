@@ -24,4 +24,6 @@ public interface TeamService {
     public PageResponse<?> getJoinedTeam(Long userId, Integer pageNo, Integer pageSize, String searchBy);
 
     public String joinTeam(Long userId, Long teamId);
+
+    public String outTeam(Long userId, Long teamId);
 }

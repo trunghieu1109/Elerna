@@ -3,6 +3,7 @@ package com.application.elerna.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.sql.Time;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,7 +24,7 @@ public class Course extends AbstractEntity<Long> {
     private String major;
 
     @Column(name="duration")
-    private Date duration;
+    private Time duration;
 
     @Column(name="rating")
     private Double rating;
