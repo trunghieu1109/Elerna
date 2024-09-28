@@ -38,6 +38,7 @@ public class CourseServiceImpl implements CourseService {
     private final UtilsRepository utilsRepository;
     private final RoleRepository roleRepository;
     private final UserService userService;
+    private final TeamRepository teamRepository;
 
     @Override
     public String addCourseRequest(AddCourseRequest request) {
@@ -191,7 +192,7 @@ public class CourseServiceImpl implements CourseService {
                 .description(course.getDescription())
                 .language(course.getLanguage())
                 .assignments(course.getAssignments().stream().map(assign->assign.getName()).toList())
-                .lessons(course.getAssignments().stream().map(lesson->lesson.getName()).toList())
+                .lessons(course.getLessons().stream().map(lesson->lesson.getName()).toList())
                 .contests(course.getContests().stream().map(contest -> contest.getName()).toList())
                 .build();
     }
@@ -217,7 +218,7 @@ public class CourseServiceImpl implements CourseService {
         courseRepository.save(course.get());
         userRepository.save(user.get());
 
-        var role = roleRepository.findByName("VIEWER_COURSE_" + course.get().getId());
+        var role = roleRepository.findByName("STUDENT_COURSE_" + course.get().getId());
 
         if (role == null) {
             throw new InvalidRequestData("Role not existed");
@@ -229,7 +230,136 @@ public class CourseServiceImpl implements CourseService {
         roleRepository.save(role);
         userRepository.save(user.get());
 
-        return "Register Course " + courseId;
+        return "User " + userId + " Registered Course " + courseId;
+    }
+
+    public String registerTeamCourse(Long teamId, Long courseId) {
+
+        var team = teamRepository.findById(teamId);
+
+        if (team.isEmpty() || !team.get().isActive()) {
+            throw new InvalidRequestData("Team not existed or invalid");
+        }
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty()) {
+            throw new InvalidRequestData("Course not existed");
+        }
+
+        team.get().addCourse(course.get());
+        course.get().addTeam(team.get());
+
+        courseRepository.save(course.get());
+        teamRepository.save(team.get());
+
+        var role = roleRepository.findByName("STUDENT_COURSE_" + course.get().getId());
+
+        if (role == null) {
+            throw new InvalidRequestData("Role not existed");
+        }
+
+        role.addTeam(team.get());
+        team.get().addRole(role);
+
+        roleRepository.save(role);
+        teamRepository.save(team.get());
+
+        return "Team " + teamId + " Registered Course " + courseId;
+    }
+
+    @Override
+    public String unregisterCourse(Long userId, Long courseId) {
+
+        var user = userRepository.findById(userId);
+
+        if (user.isEmpty() || !user.get().isActive()) {
+            throw new InvalidRequestData("User not existed or invalid");
+        }
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty()) {
+            throw new InvalidRequestData("Course not existed");
+        }
+
+        User userStd = user.get();
+        Course courseStd = course.get();
+
+        if (!userStd.getCourses().contains(courseStd)) {
+            throw new InvalidRequestData("User has not joined course before");
+        }
+
+        if (!courseStd.getUsers().contains(userStd)) {
+            throw new InvalidRequestData("User has not joined course before");
+        }
+
+        userStd.getCourses().remove(courseStd);
+        courseStd.getUsers().remove(userStd);
+
+        userRepository.save(userStd);
+        courseRepository.save(courseStd);
+
+        log.info("Remove user role");
+
+        Set<Role> roles = userStd.getRoles();
+
+        for (Role role : roles) {
+            if (role.getName().toLowerCase().contains("course")
+                    && role.getName().toLowerCase().contains("" + courseStd.getId())) {
+                userRepository.removeUserRole(userId, role.getId());
+
+            }
+        }
+
+        return "User " + userId + " unregistered course " + courseId;
+    }
+
+    @Override
+    public String unregisterTeamCourse(Long teamId, Long courseId) {
+        var team = teamRepository.findById(teamId);
+
+        if (team.isEmpty() || !team.get().isActive()) {
+            throw new InvalidRequestData("Team not existed or invalid");
+        }
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty()) {
+            throw new InvalidRequestData("Course not existed");
+        }
+
+        Team teamStd = team.get();
+        Course courseStd = course.get();
+
+        if (!teamStd.getCourses().contains(courseStd)) {
+            throw new InvalidRequestData("Team has not joined course before");
+        }
+
+        if (!courseStd.getTeams().contains(teamStd)) {
+            throw new InvalidRequestData("Team has not joined course before");
+        }
+
+        teamStd.getCourses().remove(courseStd);
+        courseStd.getTeams().remove(teamStd);
+
+        teamRepository.save(teamStd);
+        courseRepository.save(courseStd);
+
+        log.info("Remove team role");
+
+        Set<Role> roles = teamStd.getRoles();
+
+        for (Role role : roles) {
+
+            if (role.getName().toLowerCase().contains("course")
+                    && role.getName().toLowerCase().contains("" + courseStd.getId())) {
+                teamRepository.removeTeamRole(teamId, role.getId());
+
+            }
+        }
+
+        return "Team " + teamId + " unregistered course " + courseId;
     }
 
     @Override
@@ -367,19 +497,23 @@ public class CourseServiceImpl implements CourseService {
         Privilege priUpdate = privilegeService.createPrivilege("course", currentCourse.get().getId(), "update", "Update course, id = " + currentCourse.get().getId());
         Privilege priDelete = privilegeService.createPrivilege("course", currentCourse.get().getId(), "delete", "Delete course, id = " + currentCourse.get().getId());
         Privilege priView = privilegeService.createPrivilege("course", currentCourse.get().getId(), "view", "View course, id = " + currentCourse.get().getId());
+        Privilege priSubmit = privilegeService.createPrivilege("course", currentCourse.get().getId(), "submit", "View course, id = " + currentCourse.get().getId());
 
-        Role roleViewer = roleService.createRole("VIEWER", "course", currentCourse.get().getId());
+        Role roleStudent = roleService.createRole("STUDENT", "course", currentCourse.get().getId());
         Role roleEditor = roleService.createRole("EDITOR", "course", currentCourse.get().getId());
         Role roleAdmin = roleService.createRole("ADMIN", "course", currentCourse.get().getId());
 
         roleAdmin.addPrivilege(priDelete);
         roleAdmin.addPrivilege(priView);
         roleAdmin.addPrivilege(priUpdate);
+        roleAdmin.addPrivilege(priSubmit);
 
         roleEditor.addPrivilege(priUpdate);
         roleEditor.addPrivilege(priDelete);
+//        roleEditor.addPrivilege(priSubmit);
 
-        roleViewer.addPrivilege(priView);
+        roleStudent.addPrivilege(priView);
+        roleStudent.addPrivilege(priSubmit);
 
         priDelete.addRole(roleAdmin);
         priDelete.addRole(roleEditor);
@@ -388,15 +522,19 @@ public class CourseServiceImpl implements CourseService {
         priUpdate.addRole(roleEditor);
 
         priView.addRole(roleAdmin);
-        priView.addRole(roleViewer);
+        priView.addRole(roleStudent);
+
+        priSubmit.addRole(roleAdmin);
+        priSubmit.addRole(roleStudent);
 
         privilegeService.savePrivilege(priDelete);
         privilegeService.savePrivilege(priUpdate);
         privilegeService.savePrivilege(priView);
+        privilegeService.savePrivilege(priSubmit);
 
         roleService.saveRole(roleAdmin);
         roleService.saveRole(roleEditor);
-        roleService.saveRole(roleViewer);
+        roleService.saveRole(roleStudent);
 
         user.addRole(roleAdmin);
         roleAdmin.addUser(user);

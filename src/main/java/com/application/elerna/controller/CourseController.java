@@ -69,6 +69,11 @@ public class CourseController {
         return new ResponseData<>(HttpStatus.ACCEPTED, courseService.registerCourse(userId, courseId));
     }
 
+    @PostMapping("/register/group")
+    public ResponseData<String> registerTeamCourse(@RequestParam Long teamId, @RequestParam Long courseId) {
+        return new ResponseData<>(HttpStatus.ACCEPTED, courseService.registerTeamCourse(teamId, courseId));
+    }
+
     @GetMapping("/registered/user")
     public PageResponse<?> getAllRegisteredCourse(@RequestParam Long userId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {
 
@@ -84,6 +89,18 @@ public class CourseController {
     public PageResponse<?> getAllStudentList(@RequestParam Long courseId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {
 
         return courseService.getAllStudentList(courseId, pageNo, pageSize);
+    }
+
+    @PostMapping("/unregister")
+    public ResponseData<String> unregisterCourse(@RequestParam Long userId, @RequestParam Long courseId) {
+
+        return new ResponseData<>(HttpStatus.ACCEPTED, courseService.unregisterCourse(userId, courseId));
+    }
+
+    @PostMapping("/unregister/group")
+    public ResponseData<String> unregisterTeamCourse(@RequestParam Long teamId, @RequestParam Long courseId) {
+
+        return new ResponseData<>(HttpStatus.ACCEPTED, courseService.unregisterTeamCourse(teamId, courseId));
     }
 
 }

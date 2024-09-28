@@ -29,5 +29,9 @@ public interface CourseService {
 
     public PageResponse<?> getAllStudentList(Long courseId, Integer pageNo, Integer pageSize);
 
+    public String registerTeamCourse(Long teamId, Long courseId);
 
+    public String unregisterCourse(Long userId, Long courseId);
+
+    public String unregisterTeamCourse(Long teamId, Long courseId);
 }
