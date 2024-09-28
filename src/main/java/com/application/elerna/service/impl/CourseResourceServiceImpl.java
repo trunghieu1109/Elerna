@@ -2,6 +2,8 @@ package com.application.elerna.service.impl;
 
 import com.application.elerna.dto.request.AddCourseRequest;
 import com.application.elerna.dto.request.AddLessonRequest;
+import com.application.elerna.dto.response.CourseResourceResponse;
+import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.Assignment;
@@ -10,17 +12,23 @@ import com.application.elerna.model.Contest;
 import com.application.elerna.model.Lesson;
 import com.application.elerna.repository.*;
 import com.application.elerna.service.CourseResourceService;
+import com.application.elerna.utils.CustomizedMultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Time;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -239,5 +247,64 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public PageResponse<?> getAllLessonOfCourse(Long courseId, Integer pageNo, Integer pageSize) {
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty()) {
+            throw new InvalidRequestData("Course doesnot exist in database");
+        }
+
+        List<Lesson> lessons = course.get().getLessons().stream().toList();
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages((int) Math.ceil(lessons.size() * 1.0 / pageSize))
+                .data(lessons.stream().map(lesson ->
+                        CourseResourceResponse.builder()
+                                .name(lesson.getName())
+                                .resourceId(lesson.getId())
+                                .courseId(lesson.getCourse().getId())
+                                .content(lesson.getContent().getPath())
+                                .build()))
+                .build();
+    }
+
+    @Override
+    public byte[] download(String path) throws IOException {
+        return Files.readAllBytes(Path.of(lessonFolder + "\\" + path));
+
+    }
+
+    @Override
+    public CourseResourceResponse getLessonDetail(Long resourceId) {
+
+        var currentLesson = lessonRepository.findById(resourceId);
+
+        if (currentLesson.isEmpty()) {
+
+            throw new ResourceNotFound("Lesson not found");
+        }
+
+        Lesson lesson = currentLesson.get();
+
+        return CourseResourceResponse.builder()
+                .name(lesson.getName())
+                .resourceId(lesson.getId())
+                .courseId(lesson.getCourse().getId())
+                .content(lesson.getContent().getPath())
+                .build();
+    }
+
+    private MultipartFile convertPathToFile(String path) {
+
+        return new CustomizedMultipartFile(path);
+
+
     }
 }

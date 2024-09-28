@@ -1,6 +1,8 @@
 package com.application.elerna.controller;
 
 import com.application.elerna.dto.request.AddLessonRequest;
+import com.application.elerna.dto.response.CourseResourceResponse;
+import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.service.CourseResourceService;
 import jakarta.validation.Valid;
@@ -11,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.sql.Time;
 import java.util.Date;
 
@@ -48,6 +51,28 @@ public class CourseResourceController {
 //        log.info(request.getCourseId() + "");
 
         return new ResponseData<>(HttpStatus.CREATED, courseResourceService.addContest(name, courseId, startDate, endDate, new Time(System.currentTimeMillis()), file));
+    }
+
+    @GetMapping(value = "/lesson/list")
+    public PageResponse<?> getAllLessonOfCourse(@RequestParam("courseId") Long courseId, @RequestParam("pageNo") Integer pageNo, @RequestParam("pageSize") Integer pageSize) {
+
+        return courseResourceService.getAllLessonOfCourse(courseId, pageNo, pageSize);
+    }
+
+    @GetMapping(value = "/download")
+    public ResponseData<byte[]> download(@RequestParam String path) {
+
+        try {
+            return new ResponseData<>(HttpStatus.OK, "Download from path " + path, courseResourceService.download(path));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GetMapping(value = "/lesson/details")
+    public ResponseData<CourseResourceResponse> getLessonDetail(@RequestParam("lessonId") Long lessonId) {
+
+        return new ResponseData<>(HttpStatus.OK, "Get lesson details, lessonId " + lessonId, courseResourceService.getLessonDetail(lessonId));
     }
 
 }

@@ -9,6 +9,7 @@ import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -98,9 +99,9 @@ public class CourseController {
     }
 
     @PostMapping("/unregister/group")
-    public ResponseData<String> unregisterTeamCourse(@RequestParam Long teamId, @RequestParam Long courseId) {
+    public String unregisterTeamCourse(@RequestParam Long teamId, @RequestParam Long courseId) {
 
-        return new ResponseData<>(HttpStatus.ACCEPTED, courseService.unregisterTeamCourse(teamId, courseId));
+        return courseService.unregisterTeamCourse(teamId, courseId);
     }
 
 }
