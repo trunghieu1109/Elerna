@@ -5,7 +5,6 @@ import com.application.elerna.dto.request.UpdateCourseRequest;
 import com.application.elerna.dto.response.CourseRequestResponse;
 import com.application.elerna.dto.response.CourseResponse;
 import com.application.elerna.dto.response.PageResponse;
-import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.*;

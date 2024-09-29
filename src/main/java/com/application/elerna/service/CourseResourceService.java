@@ -1,7 +1,5 @@
 package com.application.elerna.service;
 
-import com.application.elerna.dto.request.AddCourseRequest;
-import com.application.elerna.dto.request.AddLessonRequest;
 import com.application.elerna.dto.response.CourseResourceResponse;
 import com.application.elerna.dto.response.PageResponse;
 import org.springframework.stereotype.Service;
@@ -20,10 +18,17 @@ public interface CourseResourceService {
 
     public String addContest(String name, Long courseId, Date startDate, Date endDate, Time duration, MultipartFile file);
 
-    public PageResponse<?> getAllLessonOfCourse(Long courseId, Integer pageNo, Integer pageSize);
+    public PageResponse<?> getAllResourceOfCourse(Long courseId, String resourceType, Integer pageNo, Integer pageSize);
 
-    public byte[] download(String path) throws IOException;
+    public byte[] download(String path, String resourceType) throws IOException;
 
-    public CourseResourceResponse getLessonDetail(Long resourceId);
+    public CourseResourceResponse getResourceDetail(Long resourceId, String resourceType);
 
+    public String updateLesson(Long resourceId, String name, Long courseId, MultipartFile file);
+
+    public String updateAssignment(Long resourceId, String name, Long courseId, Date startDate, Date endDate, MultipartFile file);
+
+    public String updateContest(Long resourceId, String name, Long courseId, Date startDate, Date endDate, Time duration, MultipartFile file);
+
+    public String submit(Long userId, String targetType, Long targetId, MultipartFile file);
 }

@@ -1,11 +1,9 @@
 package com.application.elerna.controller;
 
-import com.application.elerna.dto.request.AddLessonRequest;
 import com.application.elerna.dto.response.CourseResourceResponse;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.service.CourseResourceService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -53,26 +51,60 @@ public class CourseResourceController {
         return new ResponseData<>(HttpStatus.CREATED, courseResourceService.addContest(name, courseId, startDate, endDate, new Time(System.currentTimeMillis()), file));
     }
 
-    @GetMapping(value = "/lesson/list")
-    public PageResponse<?> getAllLessonOfCourse(@RequestParam("courseId") Long courseId, @RequestParam("pageNo") Integer pageNo, @RequestParam("pageSize") Integer pageSize) {
+    @GetMapping(value = "/{resource_type}/list")
+    public PageResponse<?> getAllResourceOfCourse(@RequestParam("courseId") Long courseId, @PathVariable("resource_type") String resourceType, @RequestParam("pageNo") Integer pageNo, @RequestParam("pageSize") Integer pageSize) {
 
-        return courseResourceService.getAllLessonOfCourse(courseId, pageNo, pageSize);
+        return courseResourceService.getAllResourceOfCourse(courseId, resourceType, pageNo, pageSize);
     }
 
     @GetMapping(value = "/download")
-    public ResponseData<byte[]> download(@RequestParam String path) {
+    public ResponseData<byte[]> download(@RequestParam String path, @RequestParam String resourceType) {
 
         try {
-            return new ResponseData<>(HttpStatus.OK, "Download from path " + path, courseResourceService.download(path));
+            return new ResponseData<>(HttpStatus.OK, "Download from path " + path, courseResourceService.download(path, resourceType));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @GetMapping(value = "/lesson/details")
-    public ResponseData<CourseResourceResponse> getLessonDetail(@RequestParam("lessonId") Long lessonId) {
+    @GetMapping(value = "/{resource_type}/details")
+    public ResponseData<CourseResourceResponse> getResourceDetail(@RequestParam("resourceId") Long resourceId, @PathVariable("resource_type") String resourceType) {
 
-        return new ResponseData<>(HttpStatus.OK, "Get lesson details, lessonId " + lessonId, courseResourceService.getLessonDetail(lessonId));
+        return new ResponseData<>(HttpStatus.OK, "Get " + resourceType + " details, lessonId " + resourceId, courseResourceService.getResourceDetail(resourceId, resourceType));
+    }
+
+    @PostMapping(value="/update/lesson", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseData<String> updateLesson(@RequestParam("resourceId") Long resourceId, @RequestParam("name") String name,
+                                             @RequestParam("courseId") Long courseId, @RequestParam(value = "files", required = false) MultipartFile file) {
+
+//        log.info(request.getCourseId() + "");
+
+        return new ResponseData<>(HttpStatus.CREATED, courseResourceService.updateLesson(resourceId, name, courseId, file));
+    }
+
+    @PostMapping(value="/update/assignment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseData<String> updateAssignment(@RequestParam("resourceId") Long resourceId, @RequestParam("name") String name,
+                                                 @RequestParam("courseId") Long courseId, @RequestParam("startDate") Date startDate,
+                                                 @RequestParam("endDate") Date endDate, @RequestParam(value = "files", required = false) MultipartFile file) {
+
+//        log.info(request.getCourseId() + "");
+
+        return new ResponseData<>(HttpStatus.CREATED, courseResourceService.updateAssignment(resourceId, name, courseId, startDate, endDate, file));
+    }
+
+    @PostMapping(value="/update/contest", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseData<String> updateContest(@RequestParam("resourceId") Long resourceId, @RequestParam("name") String name,
+                                              @RequestParam("courseId") Long courseId, @RequestParam("startDate") Date startDate,
+                                              @RequestParam("endDate") Date endDate, @RequestParam(value = "files", required = false) MultipartFile file) {
+
+//        log.info(request.getCourseId() + "");
+
+        return new ResponseData<>(HttpStatus.CREATED, courseResourceService.updateContest(resourceId, name, courseId, startDate, endDate, new Time(System.currentTimeMillis()), file));
+    }
+
+    @PostMapping(value = "/{target_type}/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseData<String> submit(@RequestParam("userId") Long userId, @PathVariable("target_type") String targetType, @RequestParam("target_id") Long targetId, @RequestParam("file") MultipartFile file) {
+        return new ResponseData<>(HttpStatus.CREATED, courseResourceService.submit(userId, targetType, targetId, file));
     }
 
 }

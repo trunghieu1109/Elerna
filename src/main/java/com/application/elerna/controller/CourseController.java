@@ -2,18 +2,14 @@ package com.application.elerna.controller;
 
 import com.application.elerna.dto.request.AddCourseRequest;
 import com.application.elerna.dto.request.UpdateCourseRequest;
-import com.application.elerna.dto.response.CourseRequestResponse;
 import com.application.elerna.dto.response.CourseResponse;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @Slf4j

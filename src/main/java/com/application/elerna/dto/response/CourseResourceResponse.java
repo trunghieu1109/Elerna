@@ -16,6 +16,8 @@ public class CourseResourceResponse implements Serializable {
 
     private Long resourceId;
 
+    private String resourceType;
+
     private String name;
 
     private Long courseId;
@@ -24,7 +26,7 @@ public class CourseResourceResponse implements Serializable {
 
     private Date endDate;
 
-    private Time duration;
+    private Date duration;
 
     private String content;
 
