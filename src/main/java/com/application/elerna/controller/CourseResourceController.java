@@ -54,6 +54,7 @@ public class CourseResourceController {
     @GetMapping(value = "/{resource_type}/list")
     public PageResponse<?> getAllResourceOfCourse(@RequestParam("courseId") Long courseId, @PathVariable("resource_type") String resourceType, @RequestParam("pageNo") Integer pageNo, @RequestParam("pageSize") Integer pageSize) {
 
+        log.info("get course resource");
         return courseResourceService.getAllResourceOfCourse(courseId, resourceType, pageNo, pageSize);
     }
 
@@ -105,6 +106,23 @@ public class CourseResourceController {
     @PostMapping(value = "/{target_type}/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseData<String> submit(@RequestParam("userId") Long userId, @PathVariable("target_type") String targetType, @RequestParam("target_id") Long targetId, @RequestParam("file") MultipartFile file) {
         return new ResponseData<>(HttpStatus.CREATED, courseResourceService.submit(userId, targetType, targetId, file));
+    }
+
+    @GetMapping(value="/assignment/submision/list")
+    public PageResponse<?> getSubmissionFromAssignment(@RequestParam Long assignmentId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+
+        return courseResourceService.getAssignmentSubmissionListFromAssignment(assignmentId, pageNo, pageSize);
+    }
+
+    @GetMapping(value="/contest/submision/list")
+    public PageResponse<?> getSubmissionFromContest(@RequestParam Long contestId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+
+        return courseResourceService.getContestSubmissionListFromContest(contestId, pageNo, pageSize);
+    }
+
+    @PostMapping(value="/{resource_type}/delete")
+    public ResponseData<String> deleteCourseResource(@PathVariable("resource_type") String resourceType, @RequestParam("resourceId") Long resourceId) {
+        return new ResponseData<>(HttpStatus.ACCEPTED, courseResourceService.deleteCourseResource(resourceType, resourceId));
     }
 
 }

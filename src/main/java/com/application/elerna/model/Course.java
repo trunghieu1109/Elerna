@@ -38,6 +38,9 @@ public class Course extends AbstractEntity<Long> {
     @Column(name="price")
     private Double price;
 
+    @Column(name="status")
+    private boolean status;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
     private Set<Transaction> transactions = new HashSet<>();
 

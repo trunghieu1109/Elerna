@@ -100,4 +100,9 @@ public class CourseController {
         return courseService.unregisterTeamCourse(teamId, courseId);
     }
 
+    @PostMapping("/delete")
+    public String deleteCourse(@RequestParam Long courseId) {
+        return courseService.deleteCourse(courseId);
+    }
+
 }

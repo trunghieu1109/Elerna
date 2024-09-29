@@ -7,6 +7,8 @@ import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.*;
 import com.application.elerna.repository.*;
 import com.application.elerna.service.CourseResourceService;
+import com.application.elerna.service.PrivilegeService;
+import com.application.elerna.service.RoleService;
 import com.application.elerna.utils.CustomizedMultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Time;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -37,6 +37,8 @@ public class CourseResourceServiceImpl implements CourseResourceService {
     private final UserRepository userRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final ContestSubmissionRepository contestSubmissionRepository;
+    private final PrivilegeService privilegeService;
+    private final RoleService roleService;
 
     @Value("${course.lessonFolder}")
     private String lessonFolder;
@@ -265,6 +267,10 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 return getAssignmentList(course.get(), pageNo, pageSize);
             case "contest":
                 return getContestList(course.get(), pageNo, pageSize);
+            case "assignment-submission":
+                return getAssignmentSubmissionList(course.get(), pageNo, pageSize);
+            case "contest-submission":
+                return getContestSubmissionList(course.get(), pageNo, pageSize);
             default:
                 return null;
         }
@@ -307,6 +313,175 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    private PageResponse<?> getAssignmentSubmissionList(Course course, Integer pageNo, Integer pageSize) {
+        List<AssignmentSubmission> assignmentSubmissions = course.getAssignmentSubmissions().stream().toList();
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages((int) Math.ceil(assignmentSubmissions.size() * 1.0 / pageSize))
+                .data(assignmentSubmissions.stream().map(assignmentSubmission -> getAssignmentSubmissionDetail(assignmentSubmission.getId())))
+                .build();
+    }
+
+    @Override
+    public PageResponse<?> getAssignmentSubmissionListFromAssignment(Long assignmentId, Integer pageNo, Integer pageSize) {
+
+        var currentAssignment = assignmentRepository.findById(assignmentId);
+
+        if (currentAssignment.isEmpty()) {
+            throw new ResourceNotFound("Assignment not found");
+        }
+
+        Assignment assignment = currentAssignment.get();
+
+        List<AssignmentSubmission> assignmentSubmissions = assignment.getAssignmentSubmissions().stream().toList();
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages((int) Math.ceil(assignmentSubmissions.size() * 1.0 / pageSize))
+                .data(assignmentSubmissions.stream().map(assignmentSubmission -> getAssignmentSubmissionDetail(assignmentSubmission.getId())))
+                .build();
+    }
+
+    @Override
+    public PageResponse<?> getContestSubmissionListFromContest(Long contestId, Integer pageNo, Integer pageSize) {
+
+        var currentContest = contestRepository.findById(contestId);
+
+        if (currentContest.isEmpty()) {
+            throw new ResourceNotFound("Contest not found");
+        }
+
+        Contest contest = currentContest.get();
+
+        List<ContestSubmission> contestSubmissions = contest.getContestSubmissions().stream().toList();
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages((int) Math.ceil(contestSubmissions.size() * 1.0 / pageSize))
+                .data(contestSubmissions.stream().map(contestSubmission -> getContestSubmissionDetail(contestSubmission.getId())))
+                .build();
+    }
+
+    @Override
+    public String deleteCourseResource(String resourceType, Long resourceId) {
+
+        switch (resourceType) {
+            case "lesson":
+                return deleteLesson(resourceId);
+            case "assignment":
+                return deleteAssignment(resourceId);
+            case "contest":
+                return deleteContest(resourceId);
+            default:
+                return "";
+        }
+    }
+
+    private String deleteLesson(Long resourceId) {
+
+        var currentLesson = lessonRepository.findById(resourceId);
+
+        if (currentLesson.isEmpty()) {
+            throw new ResourceNotFound("Lesson not found, id = " + resourceId);
+        }
+
+        Lesson lesson = currentLesson.get();
+
+        Course course = lesson.getCourse();
+
+        if (course == null) {
+            throw new ResourceNotFound("Lesson not matched with any courses");
+        }
+
+        if (course.getLessons().contains(lesson)) {
+            course.getLessons().remove(lesson);
+        }
+
+        lesson.setCourse(null);
+
+        lessonRepository.save(lesson);
+        courseRepository.save(course);
+
+        return "Delete lesson from course successfully";
+    }
+
+    private String deleteAssignment(Long resourceId) {
+
+        var currentAssignment = assignmentRepository.findById(resourceId);
+
+        if (currentAssignment.isEmpty()) {
+            throw new ResourceNotFound("Assignment not found, id = " + resourceId);
+        }
+
+        Assignment assignment = currentAssignment.get();
+
+        Course course = assignment.getCourse();
+
+        if (course == null) {
+            throw new ResourceNotFound("Assignment not matched with any courses");
+        }
+
+        if (course.getAssignments().contains(assignment)) {
+            course.getAssignments().remove(assignment);
+        }
+
+        assignment.setCourse(null);
+
+        assignmentRepository.save(assignment);
+        courseRepository.save(course);
+
+        return "Delete assignment from course successfully";
+    }
+
+    private String deleteContest(Long resourceId) {
+
+        var currentContest = contestRepository.findById(resourceId);
+
+        if (currentContest.isEmpty()) {
+            throw new ResourceNotFound("Contest not found, id = " + resourceId);
+        }
+
+        Contest contest = currentContest.get();
+
+        Course course = contest.getCourse();
+
+        if (course == null) {
+            throw new ResourceNotFound("Contest not matched with any courses");
+        }
+
+        if (course.getContests().contains(contest)) {
+            course.getContests().remove(contest);
+        }
+
+        contest.setCourse(null);
+
+        contestRepository.save(contest);
+        courseRepository.save(course);
+
+        return "Delete contest from course successfully";
+    }
+
+//    pri
+
+    private PageResponse<?> getContestSubmissionList(Course course, Integer pageNo, Integer pageSize) {
+        List<ContestSubmission> contestSubmissions = course.getContestSubmissions().stream().toList();
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages((int) Math.ceil(contestSubmissions.size() * 1.0 / pageSize))
+                .data(contestSubmissions.stream().map(contestSubmission -> getContestSubmissionDetail(contestSubmission.getId())))
+                .build();
+    }
+
     @Override
     public byte[] download(String path, String resourceType) throws IOException {
 
@@ -317,6 +492,10 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 return Files.readAllBytes(Path.of(assignmentFolder + "\\" + path));
             case "contest":
                 return Files.readAllBytes(Path.of(contestFolder + "\\" + path));
+            case "assignment-submission":
+                return Files.readAllBytes(Path.of(submissionFolder + "\\" + path));
+            case "contest-submission":
+                return Files.readAllBytes(Path.of(submissionFolder + "\\" + path));
             default:
                 return null;
         }
@@ -332,6 +511,10 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 return getAssignmentDetail(resourceId);
             case "contest":
                 return getContestDetail(resourceId);
+            case "assignment-submission":
+                return getAssignmentSubmissionDetail(resourceId);
+            case "contest-submission":
+                return getContestSubmissionDetail(resourceId);
             default:
                 return null;
         }
@@ -591,19 +774,29 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             contentRepository.save(newContent);
 
             AssignmentSubmission newAssignSub = AssignmentSubmission.builder()
+                    .name(submissionName)
                     .assignment(assignment.get())
                     .user(user)
                     .course(assignment.get().getCourse())
                     .content(newContent)
                     .build();
 
+            assignment.get().getCourse().addAssignmentSubmission(newAssignSub);
+            assignment.get().addAssignmentSubmission(newAssignSub);
+            user.addAssigmentSubmission(newAssignSub);
+
             newContent.setAssignmentSubmission(newAssignSub);
 
             assignmentSubmissionRepository.save(newAssignSub);
             contentRepository.save(newContent);
 
-//            course.get().addLesson(newLesson);
-//            courseRepository.save(course.get());
+            var curAssSub = assignmentSubmissionRepository.findByName(submissionName);
+
+            addSubmissionRole(user, curAssSub.get().getId());
+
+            assignmentRepository.save(assignment.get());
+            courseRepository.save(assignment.get().getCourse());
+            userRepository.save(user);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -652,17 +845,29 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             contentRepository.save(newContent);
 
             ContestSubmission newContestSub = ContestSubmission.builder()
+                    .name(submissionName)
                     .contest(contest.get())
                     .user(user)
                     .course(contest.get().getCourse())
                     .content(newContent)
                     .build();
 
+            user.addContestSubmission(newContestSub);
+            contest.get().addContestSubmission(newContestSub);
+            contest.get().getCourse().addContestSubmission(newContestSub);
+
             newContent.setContestSubmission(newContestSub);
 
             contestSubmissionRepository.save(newContestSub);
             contentRepository.save(newContent);
 
+            var curContestSub = contestSubmissionRepository.findByName(submissionName);
+
+            addSubmissionRole(user, curContestSub.get().getId());
+
+            contestRepository.save(contest.get());
+            courseRepository.save(contest.get().getCourse());
+            userRepository.save(user);
 //            course.get().addLesson(newLesson);
 //            courseRepository.save(course.get());
 
@@ -734,10 +939,75 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    private CourseResourceResponse getAssignmentSubmissionDetail(Long submissionId) {
+        var currentSubmission = assignmentSubmissionRepository.findById(submissionId);
+
+        if (currentSubmission.isEmpty()) {
+
+            throw new ResourceNotFound("Assignment submission not found");
+        }
+
+        AssignmentSubmission assignmentSubmission = currentSubmission.get();
+
+        return CourseResourceResponse.builder()
+                .name(assignmentSubmission.getContent().getName())
+                .resourceId(assignmentSubmission.getId())
+                .resourceType("Assignment Submission")
+                .courseId(assignmentSubmission.getCourse().getId())
+                .content(assignmentSubmission.getContent().getPath())
+                .build();
+    }
+
+    private CourseResourceResponse getContestSubmissionDetail(Long submissionId) {
+        var currentSubmission = contestSubmissionRepository.findById(submissionId);
+
+        if (currentSubmission.isEmpty()) {
+
+            throw new ResourceNotFound("Contest submission not found");
+        }
+
+        ContestSubmission contestSubmission = currentSubmission.get();
+
+        return CourseResourceResponse.builder()
+                .name(contestSubmission.getContent().getName())
+                .resourceId(contestSubmission.getId())
+                .resourceType("Contest Submission")
+                .courseId(contestSubmission.getCourse().getId())
+                .content(contestSubmission.getContent().getPath())
+                .build();
+    }
 
     private MultipartFile convertPathToFile(String path) {
 
         return new CustomizedMultipartFile(path);
+    }
+
+    private void addSubmissionRole(User user, Long submissionId) {
+        Privilege priUpdate = privilegeService.createPrivilege("submission", submissionId, "update", "Update course, id = " + submissionId);
+        Privilege priDelete = privilegeService.createPrivilege("submission", submissionId, "delete", "Delete course, id = " + submissionId);
+        Privilege priView = privilegeService.createPrivilege("submission", submissionId, "view", "View course, id = " + submissionId);
+
+        Role roleAdmin = roleService.createRole("ADMIN", "submission", submissionId);
+
+        roleAdmin.addPrivilege(priDelete);
+        roleAdmin.addPrivilege(priView);
+        roleAdmin.addPrivilege(priUpdate);
+
+        priDelete.addRole(roleAdmin);
+        priUpdate.addRole(roleAdmin);
+        priView.addRole(roleAdmin);
+
+        privilegeService.savePrivilege(priDelete);
+        privilegeService.savePrivilege(priUpdate);
+        privilegeService.savePrivilege(priView);
+
+        roleService.saveRole(roleAdmin);
+
+        user.addRole(roleAdmin);
+        roleAdmin.addUser(user);
+
+        roleService.saveRole(roleAdmin);
+        userRepository.save(user);
 
 
     }

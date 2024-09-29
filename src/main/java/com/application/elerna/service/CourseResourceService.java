@@ -2,6 +2,8 @@ package com.application.elerna.service;
 
 import com.application.elerna.dto.response.CourseResourceResponse;
 import com.application.elerna.dto.response.PageResponse;
+import com.application.elerna.model.Assignment;
+import com.application.elerna.model.Contest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,4 +33,11 @@ public interface CourseResourceService {
     public String updateContest(Long resourceId, String name, Long courseId, Date startDate, Date endDate, Time duration, MultipartFile file);
 
     public String submit(Long userId, String targetType, Long targetId, MultipartFile file);
+
+    public PageResponse<?> getAssignmentSubmissionListFromAssignment(Long assignmentId, Integer pageNo, Integer pageSize);
+
+    public PageResponse<?> getContestSubmissionListFromContest(Long ContestId, Integer pageNo, Integer pageSize);
+
+    public String deleteCourseResource(String resourceType, Long resourceId);
+
 }

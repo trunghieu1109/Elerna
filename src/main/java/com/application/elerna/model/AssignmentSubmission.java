@@ -12,6 +12,9 @@ import lombok.*;
 @Table(name="assign_submissions")
 public class AssignmentSubmission extends AbstractEntity<Long> {
 
+    @Column(name="name")
+    private String name;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="user_id")
     private User user;

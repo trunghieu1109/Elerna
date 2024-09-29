@@ -362,6 +362,36 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    public String deleteCourse(Long courseId) {
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new ResourceNotFound("Course is empty or is deleted");
+        }
+
+        course.get().setStatus(false);
+
+        Set<User> users = course.get().getUsers();
+
+        for (User user : users) {
+            Set<Role> roles = user.getRoles();
+
+            boolean isRelated = false;
+
+            for (Role role : roles) {
+                if (role.getName().contains("COURSE") && role.getName().contains("" + course.get().getId())) {
+                    unregisterCourse(user.getId(), courseId);
+                    break;
+                }
+            }
+
+        }
+
+        return "Delete Courses";
+    }
+
+    @Override
     public PageResponse<?> getAllRegisteredCourse(Long userId, Integer pageNo, Integer pageSize) {
 
         var user = userRepository.findById(userId);

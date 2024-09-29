@@ -34,4 +34,6 @@ public interface CourseService {
     public String unregisterCourse(Long userId, Long courseId);
 
     public String unregisterTeamCourse(Long teamId, Long courseId);
+
+    public String deleteCourse(Long courseId);
 }

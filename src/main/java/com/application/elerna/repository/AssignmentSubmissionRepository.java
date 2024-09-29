@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface AssignmentSubmissionRepository extends JpaRepository<AssignmentSubmission, Long> {
-
+    public Optional<AssignmentSubmission> findByName(String name);
 }
