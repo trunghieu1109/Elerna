@@ -210,4 +210,17 @@ public class CourseController {
         return new ResponseData<>(HttpStatus.OK, courseService.deleteCourse(courseId));
     }
 
+    /**
+     *
+     * Send register course request
+     *
+     * @param courseId Long
+     * @return ResponseData<String>
+     */
+    @PostMapping("/send-register-request")
+    public ResponseData<String> sendRegisterRequest(@RequestParam Long courseId) {
+
+        return new ResponseData<>(HttpStatus.OK, "Get payment screen", courseService.sendRegisterRequest(courseId));
+    }
+
 }

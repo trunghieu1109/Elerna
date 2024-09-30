@@ -27,6 +27,9 @@ public class Transaction extends AbstractEntity<Long> {
     @Column(name="status")
     private String status;
 
+    @Column(name="card_number")
+    private String cardNumber;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name="user_id")
     private User user;

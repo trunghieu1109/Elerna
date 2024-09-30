@@ -43,4 +43,6 @@ public interface CourseService {
 
     @PreAuthorize("hasPermission(#courseId, 'course', 'delete')")
     String deleteCourse(Long courseId);
+
+    String sendRegisterRequest(Long courseId);
 }

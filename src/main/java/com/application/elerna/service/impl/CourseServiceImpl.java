@@ -489,6 +489,27 @@ public class CourseServiceImpl implements CourseService {
 
     /**
      *
+     * Send register course request
+     *
+     * @param courseId Long
+     * @return String
+     */
+    @Override
+    public String sendRegisterRequest(Long courseId) {
+
+        User user = userService.getUserFromAuthentication();
+
+        var course = courseRepository.findById(courseId);
+
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new InvalidRequestData("Course not existed");
+        }
+
+        return "https://localhost:80/course/register/" + courseId;
+    }
+
+    /**
+     *
      * get all user's registered courses
      *
      * @param pageNo Integer
