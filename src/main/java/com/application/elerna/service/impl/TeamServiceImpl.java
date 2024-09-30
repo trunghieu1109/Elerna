@@ -13,7 +13,7 @@ import com.application.elerna.repository.*;
 import com.application.elerna.service.RoleService;
 import com.application.elerna.service.TeamService;
 import com.application.elerna.service.PrivilegeService;
-import com.application.elerna.utils.TokenEnum;
+import com.application.elerna.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,24 +31,32 @@ import java.util.*;
 public class TeamServiceImpl implements TeamService {
 
     private final TeamRepository teamRepository;
-    private final JwtServiceImpl jwtService;
     private final UserRepository userRepository;
     private final PrivilegeService privilegeService;
     private final RoleService roleService;
     private final PrivilegeRepository privilegeRepository;
     private final RoleRepository roleRepository;
     private final UtilsRepository utilsRepository;
+    private final UserService userService;
 
+    /**
+     *
+     * Create team
+     *
+     * @param teamRequest TeamRequest
+     * @return TeamResponse
+     */
     @Override
-    public String createTeam(HttpServletRequest request, TeamRequest teamRequest) {
+    public TeamResponse createTeam(TeamRequest teamRequest) {
 
         // extract group name
         String teamName = teamRequest.getName();
 
         // check if existed team
-        Optional<com.application.elerna.model.Team> foundTeam = teamRepository.findByName(teamName);
+        Optional<Team> foundTeam = teamRepository.findByName(teamName);
 
-        if (!foundTeam.isEmpty()) {
+        if (foundTeam.isPresent()) {
+            log.error("Team name has been existed in database");
             throw new InvalidRequestData("Team name has been existed in database. Please try other team names");
         }
 
@@ -62,46 +70,58 @@ public class TeamServiceImpl implements TeamService {
                 .build();
 
         // get requesting user
-
-        String token = request.getHeader("Authorization");
-
-        if (token == null || !token.startsWith("Bearer ")) {
-            throw new InvalidRequestData("Invalid access token");
-        }
-
-        String username = jwtService.extractUsername(request.getHeader("Authorization").substring("Bearer ".length()), TokenEnum.ACCESS_TOKEN);
-        User user = userRepository.findByUsername(username).get();
+        User user = userService.getUserFromAuthentication();
 
         saveTeam(team, user);
 
-        return "Create group successfully";
+        return createTeamResponse(team);
     }
 
+    /**
+     *
+     * Get team's details by teamId
+     *
+     * @param teamId Long
+     * @return TeamResponse
+     */
     @Override
     public TeamResponse getTeamDetails(Long teamId) {
 
         Optional<Team> team = teamRepository.findById(teamId);
 
+        if (team.isEmpty()) {
+            throw new ResourceNotFound("Team not found");
+        }
+
         if (!team.get().isActive()) {
             throw new InvalidRequestData("Team is inactive");
         }
 
-        return TeamResponse.builder()
-                .name(team.get().getName())
-                .createdAt(team.get().getCreatedAt())
-                .updatedAt(team.get().getUpdatedAt())
-                .build();
+        return createTeamResponse(team.get());
     }
 
+    /**
+     *
+     * Delete team by teamId
+     *
+     * @param teamId Long
+     * @return String
+     */
     @Override
     public String deleteTeam(Long teamId) {
 
+        // validate team
         var team = teamRepository.findById(teamId);
+
+        if (team.isEmpty()) {
+            throw new ResourceNotFound("Team not found");
+        }
 
         if (!team.get().isActive()) {
             throw new InvalidRequestData("Team is inactive");
         }
 
+        // delete team by setting active = false
         team.get().setActive(false);
         team.get().setName(team.get().getName() + "-Deleted");
 
@@ -110,6 +130,15 @@ public class TeamServiceImpl implements TeamService {
         return "Delete team successfully";
     }
 
+    /**
+     *
+     * Get all team's details
+     *
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @param searchBy String
+     * @return PageResponse<TeamResponse>
+     */
     @Override
     public PageResponse<?> getAllTeam(Integer pageNo, Integer pageSize, String searchBy) {
         Page<Team> teams = utilsRepository.findTeamByName(pageNo, pageSize, searchBy);
@@ -119,27 +148,30 @@ public class TeamServiceImpl implements TeamService {
                 .totalPages(teams.getTotalPages())
                 .pageSize(pageSize)
                 .pageNo(pageNo)
-                .data(teams.stream().map(team ->
-                        TeamResponse.builder()
-                                .name(team.getName())
-                                .createdAt(team.getCreatedAt())
-                                .updatedAt(team.getUpdatedAt())
-                                .build()))
+                .data(teams.stream().map(this::createTeamResponse))
                 .build();
-
     }
 
+    /**
+     *
+     * Get user's joined team
+     *
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @param searchBy String
+     * @return PageResponse
+     */
     @Override
-    public PageResponse<?> getJoinedTeam(Long userId, Integer pageNo, Integer pageSize, String searchBy) {
-        var user = userRepository.findById(userId);
+    public PageResponse<?> getJoinedTeam(Integer pageNo, Integer pageSize, String searchBy) {
 
-        if (!user.get().isActive()) {
-            throw new InvalidRequestData("User is inactive");
-        }
+        // get user from authentication
+        User user = userService.getUserFromAuthentication();
+        System.out.println(user.getId());
 
+        // get user's joined teams
         List<Team> teams = new ArrayList<>();
 
-        for (Team team : user.get().getTeams()) {
+        for (Team team : user.getTeams()) {
             if (team.getName().toLowerCase().contains(searchBy.toLowerCase()) && team.isActive()) {
                 teams.add(team);
             }
@@ -147,34 +179,32 @@ public class TeamServiceImpl implements TeamService {
 
         int size_ = teams.size();
 
-        Page<Team> page = new PageImpl(teams.subList(Math.min(pageNo * pageSize, teams.size()), Math.min((pageNo + 1) * pageSize, teams.size())),
+        Page<Team> page = new PageImpl<>(teams.subList(Math.min(pageNo * pageSize, teams.size()), Math.min((pageNo + 1) * pageSize, teams.size())),
                 PageRequest.of(pageNo, pageSize),
                 (int) Math.ceil((double)size_ / pageSize));
-
-//        log.info("" +  + " " + size_ + " " + pageSize);
 
         return PageResponse.builder()
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages((int) Math.ceil((double)size_ / pageSize))
-                .data(page.stream().map(team ->
-                        TeamResponse.builder()
-                                .name(team.getName())
-                                .createdAt(team.getCreatedAt())
-                                .updatedAt(team.getUpdatedAt())
-                        .build()))
+                .data(page.stream().map(this::createTeamResponse))
                 .build();
     }
 
+    /**
+     *
+     * User joins team
+     *
+     * @param teamId Long
+     * @return String
+     */
     @Override
-    public String joinTeam(Long userId, Long teamId) {
+    public String joinTeam(Long teamId) {
 
-        var user = userRepository.findById(userId);
+        // get user from authentication
+        User user = userService.getUserFromAuthentication();
 
-        if (user.isEmpty() || !user.get().isActive()) {
-            throw new InvalidRequestData("User is not ready (inactive or not existed)");
-        }
-
+        // find team
         var team = teamRepository.findById(teamId);
 
         if (team.isEmpty() || !team.get().isActive()) {
@@ -182,72 +212,84 @@ public class TeamServiceImpl implements TeamService {
         }
 
         Team team_ = team.get();
-        User user_ = user.get();
 
-        team_.addUser(user_);
-        user_.addTeam(team_);
+        // user joins team
+        team_.addUser(user);
+        user.addTeam(team_);
 
+        // save team and user
         teamRepository.save(team_);
-        userRepository.save(user_);
+        userRepository.save(user);
 
+        // add team's role for user
         for (Role role : team_.getRoles()) {
             if (role.getName().contains("VIEWER")) {
-                user_.addRole(role);
-                role.addUser(user_);
+                user.addRole(role);
+                role.addUser(user);
 
                 roleRepository.save(role);
-                userRepository.save(user_);
+                userRepository.save(user);
                 log.info("add viewer role to user");
                 break;
             }
         }
 
-        return "User " + userId + " joins team successfully";
+        return "User " + user.getId() + " joins team successfully";
     }
 
+    /**
+     *
+     * User out team
+     *
+     * @param teamId Long
+     * @return String
+     */
     @Override
-    public String outTeam(Long userId, Long teamId) {
+    public String outTeam(Long teamId) {
 
-        var currentUser = userRepository.findById(userId);
+        // get user from authentication
+        User user = userService.getUserFromAuthentication();
 
-        if (currentUser == null || currentUser.isEmpty() || !currentUser.get().isActive()) {
-            throw new InvalidRequestData("UserId is invalid, not existed or inactive");
-        }
-
+        // find team
         var currentTeam = teamRepository.findById(teamId);
 
-        if (currentTeam == null || currentTeam.isEmpty() || !currentTeam.get().isActive()) {
+        if (currentTeam.isEmpty() || !currentTeam.get().isActive()) {
             throw new InvalidRequestData("TeamId is invalid, not existed or inactive " + teamId);
         }
 
         Team team = currentTeam.get();
-        User user = currentUser.get();
 
+        // remove user from team
         if (!user.getTeams().contains(team)) {
             throw new ResourceNotFound("User not in teams");
         }
 
         if (!team.getUsers().contains(user)) {
-            throw new ResourceNotFound("Teams doesnot contain user");
+            throw new ResourceNotFound("Teams does not contain user");
         }
 
-        userRepository.removeUserTeam(userId, teamId);
+        userRepository.removeUserTeam(user.getId(), teamId);
 
-
-        Set<Role> roles = currentUser.get().getRoles();
+        // remove user's roles
+        Set<Role> roles = user.getRoles();
 
         for (Role role : roles) {
             if (role.getName().contains("TEAM") && role.getName().contains("" + currentTeam.get().getId())) {
-                userRepository.removeUserRole(userId, role.getId());
+                userRepository.removeUserRole(user.getId(), role.getId());
 
             }
         }
 
-
-
         return "User has out of team";
     }
 
+    /**
+     *
+     * User saves team
+     *
+     * @param team Team
+     * @param user User
+     */
     public void saveTeam(Team team, User user) {
         // add user to team as the team leader
         user.addTeam(team);
@@ -257,6 +299,10 @@ public class TeamServiceImpl implements TeamService {
         teamRepository.save(team);
 
         var currentTeam = teamRepository.findByName(team.getName());
+
+        if (currentTeam.isEmpty()) {
+            throw new ResourceNotFound("Team not found");
+        }
 
         // create roles and privileges relating to team
         Privilege priView = privilegeService.createPrivilege("team", currentTeam.get().getId(), "view", "View team, id = " + currentTeam.get().getId());
@@ -309,5 +355,20 @@ public class TeamServiceImpl implements TeamService {
         roleRepository.save(roleViewer);
 
         userRepository.save(user);
+    }
+
+    /**
+     *
+     * Create team response from team details
+     *
+     * @param team Team
+     * @return TeamResponse
+     */
+    private TeamResponse createTeamResponse(Team team) {
+        return TeamResponse.builder()
+                .name(team.getName())
+                .createdAt(team.getCreatedAt())
+                .updatedAt(team.getUpdatedAt())
+                .build();
     }
 }

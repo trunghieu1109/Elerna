@@ -1,12 +1,9 @@
 package com.application.elerna.service.impl;
 
-import com.application.elerna.dto.response.UserDetail;
-import com.application.elerna.model.Token;
 import com.application.elerna.model.User;
 import com.application.elerna.service.JwtService;
 import com.application.elerna.utils.TokenEnum;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -45,11 +42,26 @@ public class JwtServiceImpl implements JwtService {
     @Value("${jwt.refreshKey}")
     private String refreshKey;
 
+    /**
+     *
+     * Generate access token
+     *
+     * @param username String
+     * @return String
+     */
     @Override
     public String generateAccessToken(String username) {
         return generateAccessToken(new HashMap<String, Object>(), username);
     }
 
+    /**
+     *
+     * Generate access token specifically
+     *
+     * @param claims Map<String, Object>
+     * @param username String
+     * @return String
+     */
     private String generateAccessToken(Map<String, Object> claims, String username) {
         return Jwts.builder()
                 .setClaims(claims)
@@ -60,11 +72,26 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
+    /**
+     *
+     * Generate refresh token
+     *
+     * @param username String
+     * @return String
+     */
     @Override
     public String generateRefreshToken(String username) {
         return generateRefreshToken(new HashMap<String, Object>(), username);
     }
 
+    /**
+     *
+     * Generate refresh token specifically
+     *
+     * @param claims Map<String, Object>
+     * @param username String
+     * @return String
+     */
     private String generateRefreshToken(Map<String, Object> claims, String username) {
         return Jwts.builder()
                 .setClaims(claims)
@@ -75,11 +102,26 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
+    /**
+     *
+     * Generate reset token
+     *
+     * @param username String
+     * @return String
+     */
     @Override
     public String generateResetToken(String username) {
         return generateResetToken(new HashMap<String, Object>(), username);
     }
 
+    /**
+     *
+     * Generate reset token specifically
+     *
+     * @param claims Map<String, Object>
+     * @param username String
+     * @return String
+     */
     private String generateResetToken(Map<String, Object> claims, String username) {
         return Jwts.builder()
                 .setClaims(claims)
@@ -90,8 +132,15 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
+    /**
+     *
+     * Get key from secretKey
+     *
+     * @param type TokenEnum
+     * @return Key
+     */
     private Key getKey(TokenEnum type) {
-        byte[] byteKey = null;
+        byte[] byteKey;
 
         if (ACCESS_TOKEN.equals(type)) {
             byteKey = Decoders.BASE64.decode(secretKey);
@@ -99,7 +148,6 @@ public class JwtServiceImpl implements JwtService {
             if (REFRESH_TOKEN.equals(type)) {
                 byteKey = Decoders.BASE64.decode(refreshKey);
             } else {
-//                System.out.println(resetKey);
                 byteKey = Decoders.BASE64.decode(resetKey);
             }
         }
@@ -107,12 +155,28 @@ public class JwtServiceImpl implements JwtService {
         return Keys.hmacShaKeyFor(byteKey);
     }
 
+    /**
+     *
+     * Extract username from token
+     *
+     * @param token String
+     * @param type TokenEnum
+     * @return String
+     */
     @Override
     public String extractUsername(String token, TokenEnum type) {
-        String str = extractClaim(token, type, Claims::getSubject);
-        return str;
+        return extractClaim(token, type, Claims::getSubject);
     }
 
+    /**
+     *
+     * Check toke whether is valid or not
+     *
+     * @param token String
+     * @param type TokenEnum
+     * @param user UserDetails
+     * @return boolean
+     */
     @Override
     public boolean isValid(String token, TokenEnum type, UserDetails user) {
 
@@ -127,20 +191,54 @@ public class JwtServiceImpl implements JwtService {
         return username.equals(user.getUsername()) && !isExpired(token, type);
     }
 
+    /**
+     *
+     * Check whether token is expired or not
+     *
+     * @param token String
+     * @param type TokenEnum
+     * @return boolean
+     */
     @Override
     public boolean isExpired(String token, TokenEnum type) {
         return extractExpiration(token, type).before(new Date(System.currentTimeMillis()));
     }
 
+    /**
+     *
+     * Get token expiration
+     *
+     * @param token String
+     * @param type TokenEnum
+     * @return Date
+     */
     private Date extractExpiration(String token, TokenEnum type) {
         return extractClaim(token, type, Claims::getExpiration);
     }
 
+    /**
+     *
+     * Extract information from claims
+     *
+     * @param token String
+     * @param type TokenEnum
+     * @param claimResolver Function<Claims, T>
+     * @return T
+     * @param <T> T
+     */
     private <T> T extractClaim(String token, TokenEnum type, Function<Claims, T> claimResolver) {
         final Claims claims = extractAllClaims(token, type);
         return claimResolver.apply(claims);
     }
 
+    /**
+     *
+     * Extract claims from token
+     *
+     * @param token String
+     * @param type TokenEnum
+     * @return Claims
+     */
     private Claims extractAllClaims(String token, TokenEnum type) {
         return Jwts.parserBuilder().setSigningKey(getKey(type)).build().parseClaimsJws(token).getBody();
     }

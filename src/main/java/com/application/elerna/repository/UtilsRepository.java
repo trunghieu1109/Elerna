@@ -25,6 +25,15 @@ public class UtilsRepository {
     @PersistenceContext
     private final EntityManager entityManager;
 
+    /**
+     *
+     * Find all user by search criteria
+     *
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @param searchBy String[]
+     * @return Page<User>
+     */
     public Page<User> findUserBySearchCriteria(Integer pageNo, Integer pageSize, String... searchBy) {
 
         StringBuilder query = new StringBuilder("select u from User u where 1 = 1");
@@ -37,7 +46,7 @@ public class UtilsRepository {
 
                 if (matcher.find()) {
                     String addition = " and u." + matcher.group(1) + " like lower(\"%" + matcher.group(3) + "%\")";
-                    log.info("Addition Criteria: " + addition);
+                    log.info("Addition Sorting Criteria: {}", addition);
                     query.append(addition);
                 }
             }
@@ -45,40 +54,43 @@ public class UtilsRepository {
 
         Query selectQuery = entityManager.createQuery(query.toString());
 
-        Long totalPages = (long) selectQuery.getResultList().size() / pageSize;
+        long totalPages = (long) selectQuery.getResultList().size() / pageSize;
 
         selectQuery.setFirstResult(pageNo * pageSize);
         selectQuery.setMaxResults(pageSize);
 
         List<User> users = selectQuery.getResultList();
 
-        Page<User> page = new PageImpl<User>(users, PageRequest.of(pageNo, pageSize), totalPages);
-
-        return page;
+        return new PageImpl<User>(users, PageRequest.of(pageNo, pageSize), totalPages);
     }
 
+    /**
+     *
+     * Find all team by searching criteria
+     *
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @param searchBy String
+     * @return Page<Team>
+     */
     public Page<Team> findTeamByName(Integer pageNo, Integer pageSize, String searchBy) {
         StringBuilder query = new StringBuilder("select t from Team t where t.name like lower(\"%" + searchBy + "%\") and t.isActive = TRUE");
 
         Query selectQuery = entityManager.createQuery(query.toString());
 
-        int size_ = selectQuery.getResultList().size();
-
-        int totalPages = size_;
+        int totalPages = selectQuery.getResultList().size();
 
         selectQuery.setFirstResult(pageNo * pageSize);
         selectQuery.setMaxResults(pageSize);
         List<Team> teams = selectQuery.getResultList();
 
-        Page<Team> page = new PageImpl<Team>(teams, PageRequest.of(pageNo, pageSize), totalPages);
-
-        return page;
+        return new PageImpl<>(teams, PageRequest.of(pageNo, pageSize), totalPages);
 
     }
 
     public Page<Course> findCourseBySearchCriteria(Integer pageNo, Integer pageSize, String... searchBy) {
 
-        StringBuilder query = new StringBuilder("select c from Course c where 1 = 1");
+        StringBuilder query = new StringBuilder("select c from Course c where 1 = 1 and c.status = TRUE");
 
         if (searchBy != null) {
             for (String criteria : searchBy) {
@@ -88,7 +100,7 @@ public class UtilsRepository {
 
                 if (matcher.find()) {
                     String addition = " and c." + matcher.group(1) + " like lower(\"%" + matcher.group(3) + "%\")";
-                    log.info("Addition Criteria: " + addition);
+                    log.info("Addition Searching Criteria: {}", addition);
                     query.append(addition);
                 }
             }
@@ -105,9 +117,7 @@ public class UtilsRepository {
 
         List<Course> courses = selectQuery.getResultList();
 
-        Page<Course> page = new PageImpl<Course>(courses, PageRequest.of(pageNo, pageSize), size_);
-//        log.info(((long) Math.ceil(size_ * 1.0 / pageSize)) + " " + size_ + " " + pageSize);
-        return page;
+        return new PageImpl<>(courses, PageRequest.of(pageNo, pageSize), size_);
     }
 
 

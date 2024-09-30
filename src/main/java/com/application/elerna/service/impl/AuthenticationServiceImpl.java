@@ -37,6 +37,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final MailService mailService;
     private final RoleService roleService;
 
+    /**
+     * Users sign up to server. They send a request with
+     * register information and then receive access and
+     * refresh token
+     *
+     * @param request SignUpRequest
+     * @return TokenResponse
+     */
     @Override
     public TokenResponse signUp(SignUpRequest request) {
 
@@ -45,12 +53,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // check is existed username
         Optional<User> currentUser = userService.getByUserName(username);
-        if (!currentUser.isEmpty()) {
+        if (currentUser.isPresent()) {
+            log.error("Username had been existed in database");
             throw new InvalidRequestData("Username had been existed in database");
         }
 
         // create new user
-
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -73,19 +81,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
 
         // create new token
-
         log.info("Get access token");
-        String accesssToken = jwtService.generateAccessToken(username);
+        String accessToken = jwtService.generateAccessToken(username);
 
         log.info("Get refresh token");
         String refreshToken = jwtService.generateRefreshToken(username);
 
         Token token = Token.builder()
-                .accessToken(accesssToken)
+                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .status(true)
                 .build();
 
+        log.info("User add token");
         user.setToken(token);
         token.setUser(user);
 
@@ -96,41 +104,53 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             log.info("Add profile management role");
             userService.addProfileRole(user);
         } else {
-            log.info("Add system admin role");
-            userService.addSystemAdminRole(user);
+            if (request.getSystemRole().equals("admin")) {
+                log.info("Add system admin role");
+                userService.addSystemAdminRole(user);
+            }
         }
 
         log.info("Save user");
         userService.saveUser(user);
 
         return TokenResponse.builder()
-                .accessToken(accesssToken)
+                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .resetToken("reset_token")
                 .userId(user.getId())
                 .build();
     }
 
+    /**
+     *
+     * User login to sever. They send username, password
+     * and server will check authentication.
+     *
+     * @param request SignInRequest
+     * @return TokenResponse
+     */
     @Override
     public TokenResponse authenticate(SignInRequest request) {
 
         // extract username, password
-
         String username = request.getUsername();
         String password = request.getPassword();
 
         // authenticate by authentication manager
+        log.info("Authenticate user with username and password");
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
 
         // Get user entity
         var user = userService.getByUserName(username).orElseThrow(() -> new ResourceNotFound("Can't get user with username"));
 
+        // check user is active
         if (!user.isActive()) {
+            log.error("User is in active");
             throw new InvalidRequestData("User is inactive");
         }
 
         Token token = tokenService.getById(user.getToken().getId());
-        log.info("Token id: " + token.getId());
+        log.info("Token id: {}", token.getId());
 
         // Generate new access token and refresh token
         String accessToken = jwtService.generateAccessToken(username);
@@ -150,10 +170,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    /**
+     *
+     * User request new access token while sending refresh
+     * token. Server verify refresh token and provide new
+     * access token
+     *
+     * @param request SignInRequest
+     * @return TokenResponse
+     */
     @Override
     public TokenResponse refresh(HttpServletRequest request) {
 
-        // extract refresh token
+        // extract refresh token from header
         String refreshToken = request.getHeader("Refresh-Token");
 
         if (refreshToken == null || refreshToken.isEmpty()) {
@@ -193,18 +222,27 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    /**
+     *
+     * User logout.
+     *
+     * @param request HttpServletRequest
+     */
     @Override
     public void logout(HttpServletRequest request) {
+
+        // extract token from header
         String accessToken = request.getHeader("Authorization");
 
-        log.info("Log out: Access Token: " + accessToken);
+        log.info("Log out: Access Token: {}", accessToken);
 
-        if (accessToken == null || accessToken.isEmpty() || !accessToken.startsWith("Bearer ")) {
+        if (accessToken == null || !accessToken.startsWith("Bearer ")) {
             throw new InvalidRequestData("Logout: Access Token is invalid");
         }
 
         accessToken = accessToken.substring("Bearer ".length());
 
+        // extract username and verify token
         String username = jwtService.extractUsername(accessToken, TokenEnum.ACCESS_TOKEN);
         if (username == null || username.isEmpty()) {
             throw new InvalidRequestData("Logout: Username is invalid");
@@ -212,34 +250,48 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         Optional<User> user = userService.getByUserName(username);
 
+        if (user.isEmpty()) {
+            throw new ResourceNotFound("User not found, username: " + username);
+        }
+
         if (!jwtService.isValid(accessToken, TokenEnum.ACCESS_TOKEN, user.get())) {
             throw new InvalidRequestData("Logout: Username is not matched or Token is expired");
         }
 
+        // delete token
         Token currentToken = tokenService.getById(user.get().getToken().getId());
 
         tokenService.deleteToken(currentToken);
 
     }
 
+    /**
+     *
+     * User send email to request resetting password.
+     * Server check and send a confirmation email to user.
+     *
+     * @param email String
+     * @return TokenResponse
+     */
     @Override
     public TokenResponse forgotPassword(String email) throws MessagingException, UnsupportedEncodingException {
+
+        // extract email
         var user = userService.getByEmail(email).orElseThrow(() -> new ResourceNotFound("Cant get user by email: " + email));
 
         if (!user.isActive()) {
+            log.error("User is inactive");
             throw new InvalidRequestData("Email is matched with inactive user");
         }
 
+        // generate reset token
         String resetToken = jwtService.generateResetToken(user.getUsername());
         Token token = user.getToken();
 
-        String url = String.format("curl -X 'POST' \\\n" +
-                "  'http://localhost/auth/confirm-reset' \\\n" +
-                "  -H 'accept: */*' \\\n" +
-                "  -H 'Content-Type: application/json' \\\n" +
-                "  -d '\"%s\"'", resetToken);
+        // send email
+        String url = String.format("curl -X 'POST' 'http://localhost/auth/confirm-reset' -H 'accept: */*' -H 'Content-Type: application/json' -d '\"%s\"'", resetToken);
 
-//        mailService.sendEmail("hieukunno1109@gmail.com", "Confirm Reset Password", url, null);
+//        mailService.sendEmail(email, "Confirm Reset Password", url, null);
 
         System.out.println(url);
 
@@ -251,6 +303,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    /**
+     *
+     * Server receive reset token and check whether
+     * it matched with user in database or not
+     *
+     * @param resetToken String
+     * @return String
+     */
     @Override
     public String confirm(String resetToken) {
 
@@ -260,8 +320,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new InvalidRequestData("Reset Token is invalid");
         }
 
+        // extract username from token
         String username = jwtService.extractUsername(resetToken, TokenEnum.RESET_TOKEN);
 
+        // check whether username existed or not
         var user = userService.getByUserName(username).orElseThrow(() -> new ResourceNotFound("Cant get user by username: " + username));
         if (!username.equals(user.getUsername())) {
             throw new InvalidRequestData("Reset token is not matched with user");
@@ -271,15 +333,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     }
 
+    /**
+     *
+     * User send ResetPasswordRequest including password,
+     * confirmation password and reset token. Then server
+     * verify and change password.
+     *
+     * @param request ResetPasswordRequest
+     * @return String
+     */
     @Override
     public String resetPassword(ResetPasswordRequest request) {
 
+        // validate reset token
         String resetToken = request.getResetToken();
 
         if (resetToken == null || resetToken.isEmpty()) {
             throw new InvalidRequestData("Reset Token is invalid");
         }
 
+        // extract username
         String username = jwtService.extractUsername(resetToken, TokenEnum.RESET_TOKEN);
 
         var user = userService.getByUserName(username).orElseThrow(() -> new ResourceNotFound("Cant get user by username: " + username));
@@ -287,6 +360,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new InvalidRequestData("Reset token is not matched with user");
         }
 
+        // compare password and confirmation
         String password = request.getPassword();
         String confirmPassword  = request.getConfirmPassword();
 
@@ -294,6 +368,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new InvalidRequestData("Password is not matched with confirm password");
         }
 
+        // change password
         user.setPassword(passwordEncoder.encode(password));
 
         userService.saveUser(user);
@@ -301,6 +376,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return "Change password successfully";
     }
 
+    /**
+     *
+     * Add global role for user
+     *
+     * @param user User
+     */
     private void addGlobalRole(User user) {
         Role global_team_add = roleService.getRoleByName("GLOBAL_TEAM_ADD");
         Role global_team_view = roleService.getRoleByName("GLOBAL_TEAM_VIEW");

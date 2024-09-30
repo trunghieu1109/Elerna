@@ -4,6 +4,7 @@ import com.application.elerna.dto.request.UserDetailRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.model.User;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -13,33 +14,35 @@ import java.util.Optional;
 @Service
 public interface UserService {
 
-    public UserDetailsService userDetailsService();
+    UserDetailsService userDetailsService();
 
     @PreAuthorize("hasPermission(-1, 'profile', 'all')")
-    public PageResponse<?> getAllUsersBySort(Integer pageNo, Integer pageSize, String... sortBy);
+    PageResponse<?> getAllUsersBySort(Integer pageNo, Integer pageSize, String... sortBy);
 
     @PreAuthorize("hasPermission(-1, 'profile', 'all')")
-    public PageResponse<?> getAllUsersBySearch(Integer pageNo, Integer pageSize, String... searchBy);
+    PageResponse<?> getAllUsersBySearch(Integer pageNo, Integer pageSize, String... searchBy);
 
-    public void saveUser(User user);
+    void saveUser(User user);
 
-    public void addProfileRole(User user);
+    void addProfileRole(User user);
 
-    public void addSystemAdminRole(User user);
+    void addSystemAdminRole(User user);
 
-    public Optional<User> getByUserName(String username);
+    Optional<User> getByUserName(String username);
 
-    public Optional<User> getByEmail(String email);
+    Optional<User> getByEmail(String email);
 
     @PreAuthorize("hasPermission(#userId, 'profile', 'view')")
-    public UserDetail getUserById(Long userId);
+    UserDetail getUserById(Long userId);
 
     @PreAuthorize("hasPermission(#request.getUserId(), 'profile', 'update')")
-    public UserDetail updateUser(UserDetailRequest request);
+    UserDetail updateUser(UserDetailRequest request);
 
     @PreAuthorize("hasPermission(#userId, 'profile', 'delete')")
-    public String deleteUser(Long userId);
+    String deleteUser(Long userId);
 
-    public UserDetail createUserDetail(User user);
+    UserDetail createUserDetail(User user);
+
+    User getUserFromAuthentication();
 
 }

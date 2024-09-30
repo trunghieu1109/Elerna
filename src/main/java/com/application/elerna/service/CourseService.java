@@ -4,36 +4,43 @@ import com.application.elerna.dto.request.AddCourseRequest;
 import com.application.elerna.dto.request.UpdateCourseRequest;
 import com.application.elerna.dto.response.CourseResponse;
 import com.application.elerna.dto.response.PageResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
 public interface CourseService {
 
-    public String addCourseRequest(AddCourseRequest request);
+    String addCourseRequest(AddCourseRequest request);
 
-    public PageResponse<?> getAllCourseRequest(Integer pageNo, Integer pageSize);
+    @PreAuthorize("hasPermission(-1, 'course', 'all')")
+    PageResponse<?> getAllCourseRequest(Integer pageNo, Integer pageSize);
 
-    public String approveCourseRequest(Long requestId);
+    @PreAuthorize("hasPermission(-1, 'course', 'all')")
+    String approveCourseRequest(Long requestId);
 
-    public String rejectCourseRequest(Long requestId);
+    @PreAuthorize("hasPermission(-1, 'course', 'all')")
+    String rejectCourseRequest(Long requestId);
 
-    public PageResponse<?> getAllCourseBySearch(Integer pageNo, Integer pageSize, String... searchBy);
+    PageResponse<?> getAllCourseBySearch(Integer pageNo, Integer pageSize, String... searchBy);
 
-    public CourseResponse getCourseDetail(Long courseId);
+    CourseResponse getCourseDetail(Long courseId);
 
-    public String registerCourse(Long userId, Long courseId);
+    String registerCourse(Long courseId);
 
-    public PageResponse<?> getAllRegisteredCourse(Long userId, Integer pageNo, Integer pageSize);
+    PageResponse<?> getAllRegisteredCourse(Integer pageNo, Integer pageSize);
 
-    public String updateCourse(UpdateCourseRequest request);
+    @PreAuthorize("hasPermission(#request.courseId, 'course', 'update')")
+    String updateCourse(UpdateCourseRequest request);
 
-    public PageResponse<?> getAllStudentList(Long courseId, Integer pageNo, Integer pageSize);
+    @PreAuthorize("hasPermission(-1, 'course', 'all')")
+    PageResponse<?> getAllStudentList(Long courseId, Integer pageNo, Integer pageSize);
 
-    public String registerTeamCourse(Long teamId, Long courseId);
+    String registerTeamCourse(Long teamId, Long courseId);
 
-    public String unregisterCourse(Long userId, Long courseId);
+    String unregisterCourse(Long userId, Long courseId);
 
-    public String unregisterTeamCourse(Long teamId, Long courseId);
+    String unregisterTeamCourse(Long teamId, Long courseId);
 
-    public String deleteCourse(Long courseId);
+    @PreAuthorize("hasPermission(#courseId, 'course', 'delete')")
+    String deleteCourse(Long courseId);
 }

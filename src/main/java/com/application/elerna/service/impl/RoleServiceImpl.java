@@ -16,22 +16,44 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
 
+    /**
+     *
+     * Create role
+     *
+     * @param roleName String
+     * @param resourceType String
+     * @param resourceId Long
+     * @return Role
+     */
     @Override
-    public Role createRole(String roleName, String resourceType, Long resouceId) {
+    public Role createRole(String roleName, String resourceType, Long resourceId) {
         return Role.builder()
-                .name(roleName.toUpperCase() + "_" + resourceType.toUpperCase() + "_" + resouceId.toString())
-                .description(roleName + " of " + resourceType + ", id = " + resouceId)
+                .name(roleName.toUpperCase() + "_" + resourceType.toUpperCase() + "_" + resourceId.toString())
+                .description(roleName + " of " + resourceType + ", id = " + resourceId)
                 .privileges(new HashSet<>())
                 .teams(new HashSet<>())
                 .users(new HashSet<>())
                 .build();
     }
 
+    /**
+     *
+     * Get role by name
+     *
+     * @param name String
+     * @return Role
+     */
     @Override
     public Role getRoleByName(String name) {
         return roleRepository.findByName(name);
     }
 
+    /**
+     *
+     * Save role to database
+     *
+     * @param role Role
+     */
     public void saveRole(Role role) {
         roleRepository.save(role);
         roleRepository.flush();

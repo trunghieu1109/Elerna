@@ -25,33 +25,50 @@ public class MailServiceImpl implements MailService {
     @Value("${spring.mail.from}")
     private String mailFrom;
 
+    /**
+     *
+     * Send email
+     *
+     * @param recipients String
+     * @param subject String
+     * @param content String
+     * @param files MultipartFile[]
+     * @return String
+     */
     @Override
     public String sendEmail(String recipients, String subject, String content, MultipartFile[] files) throws MessagingException, UnsupportedEncodingException {
 
         log.info(" Send Message ");
 
+        // create mime message
         MimeMessage message = mailSender.createMimeMessage();
+
+        // config helper
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         helper.setFrom(mailFrom, "Hieu Nguyen");
 
+        // setup receivers
         if (recipients.contains(",")) {
             helper.setTo(InternetAddress.parse(recipients));
         } else {
             helper.setTo(recipients);
         }
 
+        // attach files
         if (files != null) {
             for (MultipartFile file : files) {
                 helper.addAttachment(Objects.requireNonNull(file.getOriginalFilename()), file);
             }
         }
 
+        // set subject and content
         helper.setSubject(subject);
         helper.setText(content, true);
 
+        // send message
         mailSender.send(message);
 
-        return "Send email succesfully";
+        return "Send email successfully";
     }
 
 }

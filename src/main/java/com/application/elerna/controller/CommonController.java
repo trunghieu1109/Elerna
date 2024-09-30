@@ -22,6 +22,16 @@ public class CommonController {
 
     private final MailService mailService;
 
+    /**
+     *
+     * Send email via gmail
+     *
+     * @param recipients String
+     * @param subject String
+     * @param content String
+     * @param files MultipartFile[]
+     * @return ResponseData
+     */
     @PostMapping("/send-email")
     public ResponseData<String> sendEmail(@RequestParam String recipients, @RequestParam String subject, @RequestParam String content, @RequestParam(required = false) MultipartFile[] files) {
 

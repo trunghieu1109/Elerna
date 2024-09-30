@@ -10,20 +10,19 @@ import org.springframework.stereotype.Service;
 @Service
 public interface TeamService {
 
-    public String createTeam(HttpServletRequest request, TeamRequest teamRequest);
+    TeamResponse createTeam(TeamRequest teamRequest);
 
     @PreAuthorize("hasPermission(#teamId, 'team', 'view')")
-    public TeamResponse getTeamDetails(Long teamId);
+    TeamResponse getTeamDetails(Long teamId);
 
     @PreAuthorize("hasPermission(#teamId, 'team', 'delete')")
-    public String deleteTeam(Long teamId);
+    String deleteTeam(Long teamId);
 
-    public PageResponse<?> getAllTeam(Integer pageNo, Integer pageSize, String searchBy);
+    PageResponse<?> getAllTeam(Integer pageNo, Integer pageSize, String searchBy);
 
-//    @PreAuthorize("hasPermission(#teamId, 'team', 'view')")
-    public PageResponse<?> getJoinedTeam(Long userId, Integer pageNo, Integer pageSize, String searchBy);
+    PageResponse<?> getJoinedTeam(Integer pageNo, Integer pageSize, String searchBy);
 
-    public String joinTeam(Long userId, Long teamId);
+    String joinTeam(Long teamId);
 
-    public String outTeam(Long userId, Long teamId);
+    String outTeam(Long teamId);
 }

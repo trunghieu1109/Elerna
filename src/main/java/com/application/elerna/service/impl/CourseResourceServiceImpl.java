@@ -9,7 +9,7 @@ import com.application.elerna.repository.*;
 import com.application.elerna.service.CourseResourceService;
 import com.application.elerna.service.PrivilegeService;
 import com.application.elerna.service.RoleService;
-import com.application.elerna.utils.CustomizedMultipartFile;
+import com.application.elerna.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +39,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
     private final ContestSubmissionRepository contestSubmissionRepository;
     private final PrivilegeService privilegeService;
     private final RoleService roleService;
+    private final UserService userService;
 
     @Value("${course.lessonFolder}")
     private String lessonFolder;
@@ -52,40 +53,54 @@ public class CourseResourceServiceImpl implements CourseResourceService {
     @Value("${course.submissionFolder}")
     private String submissionFolder;
 
+    /**
+     *
+     * Add lesson to course
+     *
+     * @param name String
+     * @param courseId Long
+     * @param file MultipartFile
+     * @return String
+     */
     @Override
     public String addLesson(String name, Long courseId, MultipartFile file) {
 
+        // get course by id
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
-            throw new ResourceNotFound("Course doesnt exist in database, courseId: " + courseId);
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new ResourceNotFound("Course does not exist in database, courseId: " + courseId);
         }
 
+        // get lesson by name
         var lesson = lessonRepository.findByName(name);
 
-        if (!lesson.isEmpty()) {
+        if (lesson.isPresent()) {
             throw new InvalidRequestData("Lesson was existed");
         }
 
         try {
 
+            // get file and copy to the destination folder
             String fileName = file.getOriginalFilename();
 
             String filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
 
-            log.info("filePath: " + filePath);
+            log.info("filePath: {}", filePath);
 
             File destFile = new File(filePath);
 
             if (!destFile.getParentFile().exists()) {
+
                 destFile.getParentFile().mkdirs();
             }
 
             file.transferTo(destFile);
 
+            // create new content
             Optional<Content> content = contentRepository.findByName(name);
 
-            if (!content.isEmpty()) {
+            if (content.isPresent()) {
                 throw new InvalidRequestData("Resource has been error, content is existed");
             }
 
@@ -96,6 +111,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             contentRepository.save(newContent);
 
+            // create new lesson
             Lesson newLesson = Lesson.builder()
                     .course(course.get())
                     .name(name)
@@ -107,9 +123,6 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             lessonRepository.save(newLesson);
             contentRepository.save(newContent);
 
-//            course.get().addLesson(newLesson);
-//            courseRepository.save(course.get());
-
             return "Upload Lesson Successfully";
 
         } catch (IOException e) {
@@ -117,28 +130,41 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         }
     }
 
+    /**
+     *
+     * Add assignment to course
+     *
+     * @param name String
+     * @param courseId Long
+     * @param startDate Date
+     * @param endDate Date
+     * @param file MultipartFile
+     * @return String
+     */
     @Override
     public String addAssignment(String name, Long courseId, Date startDate, Date endDate, MultipartFile file) {
 
+        // find course
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
-            throw new ResourceNotFound("Course doesnt exist in database, courseId: " + courseId);
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new ResourceNotFound("Course does not exist in database, courseId: " + courseId);
         }
 
+        // find assignment
         var assignment = assignmentRepository.findByName(name);
 
-        if (!assignment.isEmpty()) {
+        if (assignment.isPresent()) {
             throw new InvalidRequestData("Assignment was existed");
         }
 
         try {
-
+            // copy file to destination folder
             String fileName = file.getOriginalFilename();
 
             String filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
 
-            log.info("filePath: " + filePath);
+            log.info("filePath: {}", filePath);
 
             File destFile = new File(filePath);
 
@@ -148,9 +174,10 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             file.transferTo(destFile);
 
+            // create new content
             Optional<Content> content = contentRepository.findByName(name);
 
-            if (!content.isEmpty()) {
+            if (content.isPresent()) {
                 throw new InvalidRequestData("Resource has been error, content is existed");
             }
 
@@ -161,6 +188,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             contentRepository.save(newContent);
 
+            // create new assignment
             Assignment newAssignment = Assignment.builder()
                     .course(course.get())
                     .name(name)
@@ -174,9 +202,6 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             assignmentRepository.save(newAssignment);
             contentRepository.save(newContent);
 
-//            course.get().addLesson(newLesson);
-//            courseRepository.save(course.get());
-
             return "Upload Assignment Successfully";
 
         } catch (IOException e) {
@@ -184,27 +209,43 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         }
     }
 
+    /**
+     *
+     * Add contest to course
+     *
+     * @param name String
+     * @param courseId Long
+     * @param startDate Date
+     * @param endDate Date
+     * @param duration Time
+     * @param file MultipartFile
+     * @return String
+     */
     @Override
     public String addContest(String name, Long courseId, Date startDate, Date endDate, Time duration, MultipartFile file) {
+
+        // find course
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
-            throw new ResourceNotFound("Course doesnt exist in database, courseId: " + courseId);
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new ResourceNotFound("Course does not exist in database, courseId: " + courseId);
         }
 
+        // find contest
         var contest = contestRepository.findByName(name);
 
-        if (!contest.isEmpty()) {
+        if (contest.isPresent()) {
             throw new InvalidRequestData("Contest was existed");
         }
 
         try {
 
+            // copy file to destination folder
             String fileName = file.getOriginalFilename();
 
             String filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
 
-            log.info("filePath: " + filePath);
+            log.info("filePath: {}", filePath);
 
             File destFile = new File(filePath);
 
@@ -214,9 +255,10 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             file.transferTo(destFile);
 
+            // create new content
             Optional<Content> content = contentRepository.findByName(name);
 
-            if (!content.isEmpty()) {
+            if (content.isPresent()) {
                 throw new InvalidRequestData("Resource has been error, content is existed");
             }
 
@@ -227,6 +269,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             contentRepository.save(newContent);
 
+            // create new contest
             Contest newContest = Contest.builder()
                     .course(course.get())
                     .name(name)
@@ -241,9 +284,6 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             contestRepository.save(newContest);
             contentRepository.save(newContent);
 
-//            course.get().addLesson(newLesson);
-//            courseRepository.save(course.get());
-
             return "Upload Contest Successfully";
 
         } catch (IOException e) {
@@ -251,32 +291,47 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         }
     }
 
+    /**
+     *
+     * Get all course's resources
+     *
+     * @param courseId Long
+     * @param resourceType String
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     @Override
     public PageResponse<?> getAllResourceOfCourse(Long courseId, String resourceType, Integer pageNo, Integer pageSize) {
 
+        // find course
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
-            throw new InvalidRequestData("Course doesnot exist in database");
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new InvalidRequestData("Course does not exist in database");
         }
 
-        switch (resourceType) {
-            case "lesson":
-                return getLessonList(course.get(), pageNo, pageSize);
-            case "assignment":
-                return getAssignmentList(course.get(), pageNo, pageSize);
-            case "contest":
-                return getContestList(course.get(), pageNo, pageSize);
-            case "assignment-submission":
-                return getAssignmentSubmissionList(course.get(), pageNo, pageSize);
-            case "contest-submission":
-                return getContestSubmissionList(course.get(), pageNo, pageSize);
-            default:
-                return null;
-        }
+        // get resource list
+        return switch (resourceType) {
+            case "lesson" -> getLessonList(course.get(), pageNo, pageSize);
+            case "assignment" -> getAssignmentList(course.get(), pageNo, pageSize);
+            case "contest" -> getContestList(course.get(), pageNo, pageSize);
+            case "assignment-submission" -> getAssignmentSubmissionList(course.get(), pageNo, pageSize);
+            case "contest-submission" -> getContestSubmissionList(course.get(), pageNo, pageSize);
+            default -> null;
+        };
 
     }
 
+    /**
+     *
+     * Get lesson list
+     *
+     * @param course Course
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     private PageResponse<?> getLessonList(Course course, Integer pageNo, Integer pageSize) {
         List<Lesson> lessons = course.getLessons().stream().toList();
 
@@ -289,6 +344,15 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get assignment list
+     *
+     * @param course Course
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     private PageResponse<?> getAssignmentList(Course course, Integer pageNo, Integer pageSize) {
         List<Assignment> assignments = course.getAssignments().stream().toList();
 
@@ -301,6 +365,15 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get contest list
+     *
+     * @param course Course
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     private PageResponse<?> getContestList(Course course, Integer pageNo, Integer pageSize) {
         List<Contest> contests = course.getContests().stream().toList();
 
@@ -313,6 +386,15 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get assignment submission list
+     *
+     * @param course Course
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     private PageResponse<?> getAssignmentSubmissionList(Course course, Integer pageNo, Integer pageSize) {
         List<AssignmentSubmission> assignmentSubmissions = course.getAssignmentSubmissions().stream().toList();
 
@@ -325,9 +407,19 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get submission from assignment
+     *
+     * @param assignmentId Long
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     @Override
     public PageResponse<?> getAssignmentSubmissionListFromAssignment(Long assignmentId, Integer pageNo, Integer pageSize) {
 
+        // get assignment
         var currentAssignment = assignmentRepository.findById(assignmentId);
 
         if (currentAssignment.isEmpty()) {
@@ -336,6 +428,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         Assignment assignment = currentAssignment.get();
 
+        // get submission list
         List<AssignmentSubmission> assignmentSubmissions = assignment.getAssignmentSubmissions().stream().toList();
 
         return PageResponse.builder()
@@ -347,9 +440,19 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get submission from contest
+     *
+     * @param contestId Long
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponses
+     */
     @Override
     public PageResponse<?> getContestSubmissionListFromContest(Long contestId, Integer pageNo, Integer pageSize) {
 
+        // get contest
         var currentContest = contestRepository.findById(contestId);
 
         if (currentContest.isEmpty()) {
@@ -358,6 +461,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         Contest contest = currentContest.get();
 
+        // get submission from contest
         List<ContestSubmission> contestSubmissions = contest.getContestSubmissions().stream().toList();
 
         return PageResponse.builder()
@@ -369,23 +473,35 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Delete course resource
+     *
+     * @param resourceType String
+     * @param resourceId Long
+     * @return String
+     */
     @Override
     public String deleteCourseResource(String resourceType, Long resourceId) {
 
-        switch (resourceType) {
-            case "lesson":
-                return deleteLesson(resourceId);
-            case "assignment":
-                return deleteAssignment(resourceId);
-            case "contest":
-                return deleteContest(resourceId);
-            default:
-                return "";
-        }
+        return switch (resourceType) {
+            case "lesson" -> deleteLesson(resourceId);
+            case "assignment" -> deleteAssignment(resourceId);
+            case "contest" -> deleteContest(resourceId);
+            default -> "";
+        };
     }
 
+    /**
+     *
+     * Delete lesson
+     *
+     * @param resourceId Long
+     * @return String
+     */
     private String deleteLesson(Long resourceId) {
 
+        // find lesson
         var currentLesson = lessonRepository.findById(resourceId);
 
         if (currentLesson.isEmpty()) {
@@ -396,24 +512,32 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         Course course = lesson.getCourse();
 
-        if (course == null) {
+        if (course == null || !course.isStatus()) {
             throw new ResourceNotFound("Lesson not matched with any courses");
         }
 
-        if (course.getLessons().contains(lesson)) {
-            course.getLessons().remove(lesson);
-        }
+        // delete lesson
+        course.getLessons().remove(lesson);
 
         lesson.setCourse(null);
 
+        // save course and lesson
         lessonRepository.save(lesson);
         courseRepository.save(course);
 
         return "Delete lesson from course successfully";
     }
 
+    /**
+     *
+     * Delete assignment
+     *
+     * @param resourceId Long
+     * @return String
+     */
     private String deleteAssignment(Long resourceId) {
 
+        // find assignment
         var currentAssignment = assignmentRepository.findById(resourceId);
 
         if (currentAssignment.isEmpty()) {
@@ -424,24 +548,32 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         Course course = assignment.getCourse();
 
-        if (course == null) {
+        if (course == null || !course.isStatus()) {
             throw new ResourceNotFound("Assignment not matched with any courses");
         }
 
-        if (course.getAssignments().contains(assignment)) {
-            course.getAssignments().remove(assignment);
-        }
+        // delete assignment
+        course.getAssignments().remove(assignment);
 
         assignment.setCourse(null);
 
+        // save assignment and course
         assignmentRepository.save(assignment);
         courseRepository.save(course);
 
         return "Delete assignment from course successfully";
     }
 
+    /**
+     *
+     * Delete contest
+     *
+     * @param resourceId Long
+     * @return String
+     */
     private String deleteContest(Long resourceId) {
 
+        // find contest
         var currentContest = contestRepository.findById(resourceId);
 
         if (currentContest.isEmpty()) {
@@ -452,24 +584,31 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         Course course = contest.getCourse();
 
-        if (course == null) {
+        if (course == null || !course.isStatus()) {
             throw new ResourceNotFound("Contest not matched with any courses");
         }
 
-        if (course.getContests().contains(contest)) {
-            course.getContests().remove(contest);
-        }
+        // delete contest
+        course.getContests().remove(contest);
 
         contest.setCourse(null);
 
+        // save course and contest
         contestRepository.save(contest);
         courseRepository.save(course);
 
         return "Delete contest from course successfully";
     }
 
-//    pri
-
+    /**
+     *
+     * Get contest submission list
+     *
+     * @param course Course
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     private PageResponse<?> getContestSubmissionList(Course course, Integer pageNo, Integer pageSize) {
         List<ContestSubmission> contestSubmissions = course.getContestSubmissions().stream().toList();
 
@@ -482,51 +621,65 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Download resource's content from server
+     *
+     * @param path String
+     * @param resourceType String
+     * @return byte[]
+     */
     @Override
     public byte[] download(String path, String resourceType) throws IOException {
 
-        switch (resourceType) {
-            case "lesson":
-                return Files.readAllBytes(Path.of(lessonFolder + "\\" + path));
-            case "assignment":
-                return Files.readAllBytes(Path.of(assignmentFolder + "\\" + path));
-            case "contest":
-                return Files.readAllBytes(Path.of(contestFolder + "\\" + path));
-            case "assignment-submission":
-                return Files.readAllBytes(Path.of(submissionFolder + "\\" + path));
-            case "contest-submission":
-                return Files.readAllBytes(Path.of(submissionFolder + "\\" + path));
-            default:
-                return null;
-        }
+        return switch (resourceType) {
+            case "lesson" -> Files.readAllBytes(Path.of(lessonFolder + "\\" + path));
+            case "assignment" -> Files.readAllBytes(Path.of(assignmentFolder + "\\" + path));
+            case "contest" -> Files.readAllBytes(Path.of(contestFolder + "\\" + path));
+            case "assignment-submission" -> Files.readAllBytes(Path.of(submissionFolder + "\\" + path));
+            case "contest-submission" -> Files.readAllBytes(Path.of(submissionFolder + "\\" + path));
+            default -> null;
+        };
 
     }
 
+    /**
+     *
+     * Get course resource's details
+     *
+     * @param resourceId Long
+     * @param resourceType String
+     * @return CourseResourceResponse
+     */
     @Override
     public CourseResourceResponse getResourceDetail(Long resourceId, String resourceType) {
-        switch (resourceType) {
-            case "lesson":
-                return getLessonDetail(resourceId);
-            case "assignment":
-                return getAssignmentDetail(resourceId);
-            case "contest":
-                return getContestDetail(resourceId);
-            case "assignment-submission":
-                return getAssignmentSubmissionDetail(resourceId);
-            case "contest-submission":
-                return getContestSubmissionDetail(resourceId);
-            default:
-                return null;
-        }
+        return switch (resourceType) {
+            case "lesson" -> getLessonDetail(resourceId);
+            case "assignment" -> getAssignmentDetail(resourceId);
+            case "contest" -> getContestDetail(resourceId);
+            case "assignment-submission" -> getAssignmentSubmissionDetail(resourceId);
+            case "contest-submission" -> getContestSubmissionDetail(resourceId);
+            default -> null;
+        };
 
     }
 
+    /**
+     *
+     * Update lesson details
+     *
+     * @param resourceId Long
+     * @param name String
+     * @param courseId Long
+     * @param file MultipartFile
+     * @return String
+     */
     @Override
     public String updateLesson(Long resourceId, String name, Long courseId, MultipartFile file) {
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
-            throw new ResourceNotFound("Course doesnt exist in database, courseId: " + courseId);
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new ResourceNotFound("Course does not exist in database, courseId: " + courseId);
         }
 
         var lesson = lessonRepository.findById(resourceId);
@@ -536,45 +689,44 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         }
 
         try {
-
-            String fileName = file.getOriginalFilename();
-
-            String filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
-
-            log.info("filePath: " + filePath);
-
-            File destFile = new File(filePath);
-
-            if (!destFile.getParentFile().exists()) {
-                destFile.getParentFile().mkdirs();
-            }
-
-            file.transferTo(destFile);
-
-            Optional<Content> content = contentRepository.findByName(name);
-
-            if (!content.isEmpty()) {
-                throw new InvalidRequestData("Resource has been error, content is existed");
-            }
-
-            Content newContent = Content.builder()
-                    .name(fileName)
-                    .path(filePath)
-                    .build();
-
-            contentRepository.save(newContent);
-
             Lesson newLesson = lesson.get();
             newLesson.setName(name);
-            newLesson.setContent(newContent);
 
-            newContent.setLesson(newLesson);
+            if (file != null) {
+                String fileName = file.getOriginalFilename();
+
+                String filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
+
+                log.info("filePath: {}", filePath);
+
+                File destFile = new File(filePath);
+
+                if (!destFile.getParentFile().exists()) {
+                    destFile.getParentFile().mkdirs();
+                }
+
+                file.transferTo(destFile);
+
+                Optional<Content> content = contentRepository.findByName(name);
+
+                if (content.isPresent()) {
+                    throw new InvalidRequestData("Resource has been error, content is existed");
+                }
+
+                Content newContent = Content.builder()
+                        .name(fileName)
+                        .path(filePath)
+                        .build();
+
+                contentRepository.save(newContent);
+
+                newLesson.setContent(newContent);
+
+                newContent.setLesson(newLesson);
+                contentRepository.save(newContent);
+            }
 
             lessonRepository.save(newLesson);
-            contentRepository.save(newContent);
-
-//            course.get().addLesson(newLesson);
-//            courseRepository.save(course.get());
 
             return "Update Lesson Successfully";
 
@@ -583,12 +735,24 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         }
     }
 
+    /**
+     *
+     * Update assignment details
+     *
+     * @param resourceId Long
+     * @param name String
+     * @param courseId Long
+     * @param startDate Date
+     * @param endDate Date
+     * @param file MultipartFile
+     * @return String
+     */
     @Override
     public String updateAssignment(Long resourceId, String name, Long courseId, Date startDate, Date endDate, MultipartFile file) {
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
-            throw new ResourceNotFound("Course doesnt exist in database, courseId: " + courseId);
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new ResourceNotFound("Course does not exist in database, courseId: " + courseId);
         }
 
         var assignment = assignmentRepository.findById(resourceId);
@@ -599,47 +763,48 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         try {
 
-            String fileName = file.getOriginalFilename();
-
-            String filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
-
-            log.info("filePath: " + filePath);
-
-            File destFile = new File(filePath);
-
-            if (!destFile.getParentFile().exists()) {
-                destFile.getParentFile().mkdirs();
-            }
-
-            file.transferTo(destFile);
-
-            Optional<Content> content = contentRepository.findByName(name);
-
-            if (!content.isEmpty()) {
-                throw new InvalidRequestData("Resource has been error, content is existed");
-            }
-
-            Content newContent = Content.builder()
-                    .name(fileName)
-                    .path(filePath)
-                    .build();
-
-            contentRepository.save(newContent);
-
             Assignment newAssignment = assignment.get();
 
             newAssignment.setName(name);
             newAssignment.setStartDate(startDate);
             newAssignment.setEndDate(endDate);
-            newAssignment.setContent(newContent);
 
-            newContent.setAssignment(newAssignment);
+            if (file != null ) {
+                String fileName = file.getOriginalFilename();
+
+                String filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
+
+                log.info("filePath: {}", filePath);
+
+                File destFile = new File(filePath);
+
+                if (!destFile.getParentFile().exists()) {
+                    destFile.getParentFile().mkdirs();
+                }
+
+                file.transferTo(destFile);
+
+                Optional<Content> content = contentRepository.findByName(name);
+
+                if (content.isPresent()) {
+                    throw new InvalidRequestData("Resource has been error, content is existed");
+                }
+
+                Content newContent = Content.builder()
+                        .name(fileName)
+                        .path(filePath)
+                        .build();
+
+                contentRepository.save(newContent);
+
+
+                newAssignment.setContent(newContent);
+
+                newContent.setAssignment(newAssignment);
+                contentRepository.save(newContent);
+            }
 
             assignmentRepository.save(newAssignment);
-            contentRepository.save(newContent);
-
-//            course.get().addLesson(newLesson);
-//            courseRepository.save(course.get());
 
             return "Update Assignment Successfully";
 
@@ -648,12 +813,25 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         }
     }
 
+    /**
+     *
+     * Update contest details
+     *
+     * @param resourceId Long
+     * @param name String
+     * @param courseId Long
+     * @param startDate Date
+     * @param endDate Date
+     * @param duration Time
+     * @param file MultipartFile
+     * @return String
+     */
     @Override
     public String updateContest(Long resourceId, String name, Long courseId, Date startDate, Date endDate, Time duration, MultipartFile file) {
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
-            throw new ResourceNotFound("Course doesnt exist in database, courseId: " + courseId);
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new ResourceNotFound("Course does not exist in database, courseId: " + courseId);
         }
 
         var contest = contestRepository.findById(resourceId);
@@ -664,33 +842,6 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         try {
 
-            String fileName = file.getOriginalFilename();
-
-            String filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
-
-            log.info("filePath: " + filePath);
-
-            File destFile = new File(filePath);
-
-            if (!destFile.getParentFile().exists()) {
-                destFile.getParentFile().mkdirs();
-            }
-
-            file.transferTo(destFile);
-
-            Optional<Content> content = contentRepository.findByName(name);
-
-            if (!content.isEmpty()) {
-                throw new InvalidRequestData("Resource has been error, content is existed");
-            }
-
-            Content newContent = Content.builder()
-                    .name(fileName)
-                    .path(filePath)
-                    .build();
-
-            contentRepository.save(newContent);
-
             Contest newContest = contest.get();
 
             newContest.setCourse(course.get());
@@ -698,15 +849,43 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             newContest.setStartDate(startDate);
             newContest.setEndDate(endDate);
             newContest.setDuration(duration);
-            newContest.setContent(newContent);
 
-            newContent.setContest(newContest);
+            if (file == null) {
+                String fileName = file.getOriginalFilename();
+
+                String filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
+
+                log.info("filePath: {}", filePath);
+
+                File destFile = new File(filePath);
+
+                if (!destFile.getParentFile().exists()) {
+                    destFile.getParentFile().mkdirs();
+                }
+
+                file.transferTo(destFile);
+
+                Optional<Content> content = contentRepository.findByName(name);
+
+                if (content.isPresent()) {
+                    throw new InvalidRequestData("Resource has been error, content is existed");
+                }
+
+                Content newContent = Content.builder()
+                        .name(fileName)
+                        .path(filePath)
+                        .build();
+
+                contentRepository.save(newContent);
+
+
+                newContest.setContent(newContent);
+
+                newContent.setContest(newContest);
+                contentRepository.save(newContent);
+            }
 
             contestRepository.save(newContest);
-            contentRepository.save(newContent);
-
-//            course.get().addLesson(newLesson);
-//            courseRepository.save(course.get());
 
             return "Update Contest Successfully";
 
@@ -715,24 +894,37 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         }
     }
 
+    /**
+     *
+     * Submit file to server
+     *
+     * @param targetType String
+     * @param targetId Long
+     * @param file MultipartFile
+     * @return String
+     */
     @Override
-    public String submit(Long userId, String targetType, Long targetId, MultipartFile file) {
+    public String submit(String targetType, Long targetId, MultipartFile file) {
 
-        var user = userRepository.findById(userId);
-
-        if (user.isEmpty()) {
-            throw new ResourceNotFound("user not existed");
-        }
+        User user = userService.getUserFromAuthentication();
 
         if (targetType.equals("assignment")) {
-            submitAssignment(user.get(), targetId, file);
-            return "Submit assigment successfully";
+            submitAssignment(user, targetId, file);
+            return "Submit assignment successfully";
         } else {
-            submitContest(user.get(), targetId, file);
+            submitContest(user, targetId, file);
             return "Submit contest successfully";
         }
     }
 
+    /**
+     *
+     * Submit for assignment
+     *
+     * @param user User
+     * @param targetId Long
+     * @param file MultipartFile
+     */
     private void submitAssignment(User user, Long targetId, MultipartFile file) {
         var assignment = assignmentRepository.findById(targetId);
 
@@ -740,17 +932,15 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             throw new ResourceNotFound("Assignment not existed");
         }
 
-        Long subSize = (long) assignment.get().getAssignmentSubmissions().size();
+        long subSize = assignment.get().getAssignmentSubmissions().size();
 
         String submissionName = "Assignment" + targetId + "_Submission" + (subSize + 1) + "_" + file.getOriginalFilename();
 
         try {
 
-            String fileName = submissionName;
+            String filePath = submissionFolder + "\\" + submissionName;
 
-            String filePath = submissionFolder + "\\" + fileName;
-
-            log.info("filePath: " + filePath);
+            log.info("filePath: {}", filePath);
 
             File destFile = new File(filePath);
 
@@ -762,7 +952,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             Optional<Content> content = contentRepository.findByName(submissionName);
 
-            if (!content.isEmpty()) {
+            if (content.isPresent()) {
                 throw new InvalidRequestData("Resource has been error, content is existed");
             }
 
@@ -792,6 +982,10 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             var curAssSub = assignmentSubmissionRepository.findByName(submissionName);
 
+            if (curAssSub.isEmpty()) {
+                throw new ResourceNotFound("Cant get assignment submission from database");
+            }
+
             addSubmissionRole(user, curAssSub.get().getId());
 
             assignmentRepository.save(assignment.get());
@@ -804,6 +998,14 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
     }
 
+    /**
+     *
+     * Submit for contest
+     *
+     * @param user User
+     * @param targetId Long
+     * @param file MultipartFile
+     */
     private void submitContest(User user, Long targetId, MultipartFile file) {
         var contest = contestRepository.findById(targetId);
 
@@ -811,17 +1013,15 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             throw new ResourceNotFound("Contest not existed");
         }
 
-        Long subSize = (long) contest.get().getContestSubmissions().size();
+        long subSize = contest.get().getContestSubmissions().size();
 
         String submissionName = "Contest" + targetId + "_Submission" + (subSize + 1) + "_" + file.getOriginalFilename();
 
         try {
 
-            String fileName = submissionName;
+            String filePath = submissionFolder + "\\" + submissionName;
 
-            String filePath = submissionFolder + "\\" + fileName;
-
-            log.info("filePath: " + filePath);
+            log.info("filePath: {}", filePath);
 
             File destFile = new File(filePath);
 
@@ -833,7 +1033,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             Optional<Content> content = contentRepository.findByName(submissionName);
 
-            if (!content.isEmpty()) {
+            if (content.isPresent()) {
                 throw new InvalidRequestData("Resource has been error, content is existed");
             }
 
@@ -863,13 +1063,15 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             var curContestSub = contestSubmissionRepository.findByName(submissionName);
 
+            if (curContestSub.isEmpty()) {
+                throw new ResourceNotFound("Contest submission not found");
+            }
+
             addSubmissionRole(user, curContestSub.get().getId());
 
             contestRepository.save(contest.get());
             courseRepository.save(contest.get().getCourse());
             userRepository.save(user);
-//            course.get().addLesson(newLesson);
-//            courseRepository.save(course.get());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -877,6 +1079,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
     }
 
+    /**
+     *
+     * Get lesson details
+     *
+     * @param lessonId Long
+     * @return CourseResourceResponse
+     */
     private CourseResourceResponse getLessonDetail(Long lessonId) {
         var currentLesson = lessonRepository.findById(lessonId);
 
@@ -896,6 +1105,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get assignment details
+     *
+     * @param assignmentId Long
+     * @return CourseResourceResponse
+     */
     private CourseResourceResponse getAssignmentDetail(Long assignmentId) {
         var currentAssignment = assignmentRepository.findById(assignmentId);
 
@@ -917,6 +1133,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get contest details
+     *
+     * @param contestId Long
+     * @return CourseResourceResponse
+     */
     private CourseResourceResponse getContestDetail(Long contestId) {
         var currentContest = contestRepository.findById(contestId);
 
@@ -939,6 +1162,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get assignment submission details
+     *
+     * @param submissionId Long
+     * @return CourseResourceResponse
+     */
     private CourseResourceResponse getAssignmentSubmissionDetail(Long submissionId) {
         var currentSubmission = assignmentSubmissionRepository.findById(submissionId);
 
@@ -958,6 +1188,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
+    /**
+     *
+     * Get contest submission details
+     *
+     * @param submissionId Long
+     * @return CourseResourceResponse
+     */
     private CourseResourceResponse getContestSubmissionDetail(Long submissionId) {
         var currentSubmission = contestSubmissionRepository.findById(submissionId);
 
@@ -977,11 +1214,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
                 .build();
     }
 
-    private MultipartFile convertPathToFile(String path) {
-
-        return new CustomizedMultipartFile(path);
-    }
-
+    /**
+     *
+     * Add submission role for user
+     *
+     * @param user User
+     * @param submissionId Long
+     */
     private void addSubmissionRole(User user, Long submissionId) {
         Privilege priUpdate = privilegeService.createPrivilege("submission", submissionId, "update", "Update course, id = " + submissionId);
         Privilege priDelete = privilegeService.createPrivilege("submission", submissionId, "delete", "Delete course, id = " + submissionId);
@@ -1008,7 +1247,5 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         roleService.saveRole(roleAdmin);
         userRepository.save(user);
-
-
     }
 }

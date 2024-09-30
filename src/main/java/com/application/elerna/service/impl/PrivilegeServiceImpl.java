@@ -16,6 +16,16 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     private final PrivilegeRepository privilegeRepository;
 
+    /**
+     *
+     * Create privilege
+     *
+     * @param type String
+     * @param id Long
+     * @param action String
+     * @param description String
+     * @return Privilege
+     */
     @Override
     public Privilege createPrivilege(String type, Long id, String action, String description) {
         return Privilege.builder()
@@ -27,6 +37,12 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 .build();
     }
 
+    /**
+     *
+     * Save privilege to database
+     *
+     * @param privilege Privilege
+     */
     @Override
     public void savePrivilege(Privilege privilege) {
         privilegeRepository.save(privilege);

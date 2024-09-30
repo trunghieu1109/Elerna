@@ -19,14 +19,23 @@ public class CustomizedPermissionEvaluator implements PermissionEvaluator {
         return false;
     }
 
+    /**
+     *
+     * Check if user in authentication has enough permissions
+     *
+     * @param authentication Authentication
+     * @param targetId Serializable
+     * @param targetType String
+     * @param permission Object
+     * @return booleans
+     */
     @Override
     public boolean hasPermission(Authentication authentication, Serializable targetId, String targetType, Object permission) {
 
         List<GrantedAuthority> authorities = (List<GrantedAuthority>) authentication.getAuthorities();
 
         for (GrantedAuthority authority : authorities) {
-            if (authority instanceof CustomizedGrantedAuthority) {
-                CustomizedGrantedAuthority customizedGrantedAuthority = (CustomizedGrantedAuthority) authority;
+            if (authority instanceof CustomizedGrantedAuthority customizedGrantedAuthority) {
                 Role role = customizedGrantedAuthority.getRole();
 
                 if ("SYSTEM_ADMIN_*_-1".equals(role.getName())) {

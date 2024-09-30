@@ -27,6 +27,13 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
+    /**
+     *
+     * User login.
+     *
+     * @param request SignInRequest
+     * @return ResponseData
+     */
     @PostMapping("/login")
     public ResponseData<TokenResponse> logIn(@Valid @RequestBody SignInRequest request) {
 
@@ -35,6 +42,13 @@ public class AuthenticationController {
         return new ResponseData<>(HttpStatus.ACCEPTED, "User login. Get access token successully", authenticationService.authenticate(request));
     }
 
+    /**
+     *
+     * User signup.
+     *
+     * @param request SignUpRequest
+     * @return ResponseData
+     */
     @PostMapping("/signup")
     public ResponseData<TokenResponse> signUp(@Valid @RequestBody SignUpRequest request) {
 
@@ -43,12 +57,26 @@ public class AuthenticationController {
         return new ResponseData<>(HttpStatus.CREATED, "Account is created", authenticationService.signUp(request));
     }
 
+    /**
+     *
+     * Refresh access token
+     *
+     * @param request HttpServletRequest
+     * @return ResponseData
+     */
     @PostMapping("/refresh")
     public ResponseData<TokenResponse> refresh(HttpServletRequest request) {
         log.info("Refresh access token");
         return new ResponseData<>(HttpStatus.CREATED, "Access Token is refreshed", authenticationService.refresh(request));
     }
 
+    /**
+     *
+     * User logout
+     *
+     * @param request HttpServletRequest
+     * @return String
+     */
     @DeleteMapping("/logout")
     public String logout(HttpServletRequest request) {
 
@@ -57,6 +85,14 @@ public class AuthenticationController {
         return "Logout successfully";
     }
 
+    /**
+     *
+     * User send email to request resetting
+     * password and then server send confirmation email
+     *
+     * @param email String
+     * @return ResponseData
+     */
     @PostMapping("/forgot-password")
     public ResponseData<TokenResponse> forgotPassword(@RequestBody @Email @NotBlank String email) {
         try {
@@ -66,11 +102,26 @@ public class AuthenticationController {
         }
     }
 
+    /**
+     *
+     * Server check reset token with database
+     *
+     * @param resetToken String
+     * @return ResponseData
+     */
     @PostMapping("/confirm-reset")
     public ResponseData<String> confirm(@RequestBody String resetToken) {
         return new ResponseData<>(HttpStatus.ACCEPTED, authenticationService.confirm(resetToken));
     }
 
+    /**
+     *
+     * Server compare password with
+     * confirmation and change password.
+     *
+     * @param request ResetPasswordRequest
+     * @return ResponseData
+     */
     @PostMapping("/reset-password")
     public ResponseData<String> resetPassword(@RequestBody ResetPasswordRequest request) {
         return new ResponseData<>(HttpStatus.ACCEPTED, authenticationService.resetPassword(request));

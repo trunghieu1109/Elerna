@@ -6,27 +6,25 @@ import com.application.elerna.dto.request.SignUpRequest;
 import com.application.elerna.dto.response.TokenResponse;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.UnsupportedEncodingException;
 
 @Service
 public interface AuthenticationService {
 
-    public TokenResponse signUp(SignUpRequest request);
+    TokenResponse signUp(SignUpRequest request);
 
-    public TokenResponse authenticate(SignInRequest request);
+    TokenResponse authenticate(SignInRequest request);
 
-    public TokenResponse refresh(HttpServletRequest request);
+    TokenResponse refresh(HttpServletRequest request);
 
-    public void logout(HttpServletRequest request);
+    void logout(HttpServletRequest request);
 
-    public TokenResponse forgotPassword(String email) throws MessagingException, UnsupportedEncodingException;
+    TokenResponse forgotPassword(String email) throws MessagingException, UnsupportedEncodingException;
 
-    public String confirm(String resetToken);
+    String confirm(String resetToken);
 
-    public String resetPassword(ResetPasswordRequest request);
+    String resetPassword(ResetPasswordRequest request);
 
 }

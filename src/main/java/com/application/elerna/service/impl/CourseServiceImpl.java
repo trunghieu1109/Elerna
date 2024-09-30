@@ -39,35 +39,49 @@ public class CourseServiceImpl implements CourseService {
     private final UserService userService;
     private final TeamRepository teamRepository;
 
+    /**
+     *
+     * User send creating course request to database
+     *
+     * @param request AddCourseRequest
+     * @return String
+     */
     @Override
     public String addCourseRequest(AddCourseRequest request) {
 
-        var user = userRepository.findById(request.getProposerId());
+        // extract user from authentication
+        User user = userService.getUserFromAuthentication();
 
-        if (user.isEmpty() || !user.get().isActive()) {
-            log.error("ProposerId is invalid");
-            throw new InvalidRequestData("ProposerId is invalid");
-        }
-
+        // create course request
         log.info("Create new course request");
         CourseRequest courseRequest = CourseRequest.builder()
                 .description(request.getDescription())
                 .major(request.getMajor())
                 .language(request.getLanguage())
                 .name(request.getName())
-                .user(user.get())
+                .user(user)
                 .build();
 
+        // save course and user to database
         log.info("Add course request to user");
-        user.get().addCourseRequest(courseRequest);
+        user.addCourseRequest(courseRequest);
 
         log.info("Save course request to database");
         courseRequestRepository.save(courseRequest);
-        userRepository.save(user.get());
+        userRepository.save(user);
 
         return "Add new course request to database";
     }
 
+
+    /**
+     *
+     * Get all course requests by admin
+     *
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     @Override
     public PageResponse<?> getAllCourseRequest(Integer pageNo, Integer pageSize) {
 
@@ -80,51 +94,65 @@ public class CourseServiceImpl implements CourseService {
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages(courseRequests.getTotalPages())
-                .data(courseRequests.stream().map(request ->
-                        CourseRequestResponse.builder()
-                                .id(request.getId())
-                                .name(request.getName())
-                                .major(request.getMajor())
-                                .language(request.getLanguage())
-                                .description(request.getDescription())
-                                .proposerId(request.getUser().getId())
-                                .build()))
+                .data(courseRequests.stream().map(this::createCourseRequestResponse))
                 .build();
     }
 
+    /**
+     *
+     * Admin approves creating course requests
+     *
+     * @param requestId Long
+     * @return String
+     */
     @Override
     public String approveCourseRequest(Long requestId) {
 
-        log.info("Get course request, requestId " + requestId);
+        // get course request
+        log.info("Get course request, requestId {}", requestId);
         var courseRequest = courseRequestRepository.findById(requestId);
 
         if (courseRequest.isEmpty()) {
-            log.error("Cant not find course request with requestId " + requestId);
+            log.error("Cant not find course request with requestId {}", requestId);
             throw new ResourceNotFound("Cant not find course request with requestId: " + requestId);
         }
 
+        // check whether course name is existed
         CourseRequest request = courseRequest.get();
 
         var course = courseRepository.findByName(request.getName());
 
-        if (!course.isEmpty()) {
+        if (course.isPresent()) {
 //            rejectCourseRequest(requestId);
             throw new InvalidRequestData("Course name is existed in database");
         }
 
+        // create course
         log.info("Create new course");
         createCourse(request);
 
+        // delete course request
         log.info("Delete course request from database");
         deleteCourseRequest(request);
 
-        return "Approved course request " + requestId;
+        return "Approved course request " + requestId + ", create course " + request.getName();
     }
 
+    /**
+     *
+     * Admin rejects creating course requests
+     *
+     * @param requestId Long
+     * @return String
+     */
     @Override
     public String rejectCourseRequest(Long requestId) {
 
         var courseRequest = courseRequestRepository.findById(requestId);
+
+        if (courseRequest.isEmpty()) {
+            throw new ResourceNotFound("Course request is not existed");
+        }
 
         CourseRequest request = courseRequest.get();
 
@@ -151,6 +179,15 @@ public class CourseServiceImpl implements CourseService {
         return "Reject course request, requestId " + requestId;
     }
 
+    /**
+     *
+     * Get all courses by searching criteria
+     *
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @param searchBy String[]
+     * @return PageResponse
+     */
     @Override
     public PageResponse<?> getAllCourseBySearch(Integer pageNo, Integer pageSize, String... searchBy) {
 
@@ -161,18 +198,24 @@ public class CourseServiceImpl implements CourseService {
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages(courses.getTotalPages())
-                .data(courses.stream().map(course ->
-                        createCourseResponses(course)))
+                .data(courses.stream().map(this::createCourseResponses))
                 .build();
     }
 
+    /**
+     *
+     * Get course's details
+     *
+     * @param courseId Long
+     * @return CourseResponse
+     */
     @Override
     public CourseResponse getCourseDetail(Long courseId) {
 
         var course_ = courseRepository.findById(courseId);
 
-        if (course_.isEmpty()) {
-            throw new ResourceNotFound("Course does not exist, courseId: " + courseId);
+        if (course_.isEmpty() || !course_.get().isStatus()) {
+            throw new ResourceNotFound("Course does not ready, courseId: " + courseId);
         }
 
         Course course = course_.get();
@@ -180,6 +223,13 @@ public class CourseServiceImpl implements CourseService {
         return createCourseResponses(course);
     }
 
+    /**
+     *
+     * Create course response from course's details
+     *
+     * @param course Course
+     * @return CourseResponse
+     */
     private CourseResponse createCourseResponses(Course course) {
         return CourseResponse.builder()
                 .name(course.getName())
@@ -190,32 +240,35 @@ public class CourseServiceImpl implements CourseService {
                 .id(course.getId())
                 .description(course.getDescription())
                 .language(course.getLanguage())
-                .assignments(course.getAssignments().stream().map(assign->assign.getName()).toList())
-                .lessons(course.getLessons().stream().map(lesson->lesson.getName()).toList())
-                .contests(course.getContests().stream().map(contest -> contest.getName()).toList())
+                .assignments(course.getAssignments().stream().map(Assignment::getName).toList())
+                .lessons(course.getLessons().stream().map(Lesson::getName).toList())
+                .contests(course.getContests().stream().map(Contest::getName).toList())
                 .build();
     }
 
+    /**
+     *
+     * User registers course
+     *
+     * @param courseId Long
+     * @return String
+     */
     @Override
-    public String registerCourse(Long userId, Long courseId) {
+    public String registerCourse(Long courseId) {
 
-        var user = userRepository.findById(userId);
-
-        if (user.isEmpty() || !user.get().isActive()) {
-            throw new InvalidRequestData("User not existed or invalid");
-        }
+        User user = userService.getUserFromAuthentication();
 
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
+        if (course.isEmpty() || !course.get().isStatus()) {
             throw new InvalidRequestData("Course not existed");
         }
 
-        user.get().addCourse(course.get());
-        course.get().addUser(user.get());
+        user.addCourse(course.get());
+        course.get().addUser(user);
 
         courseRepository.save(course.get());
-        userRepository.save(user.get());
+        userRepository.save(user);
 
         var role = roleRepository.findByName("STUDENT_COURSE_" + course.get().getId());
 
@@ -223,15 +276,23 @@ public class CourseServiceImpl implements CourseService {
             throw new InvalidRequestData("Role not existed");
         }
 
-        role.addUser(user.get());
-        user.get().addRole(role);
+        role.addUser(user);
+        user.addRole(role);
 
         roleRepository.save(role);
-        userRepository.save(user.get());
+        userRepository.save(user);
 
-        return "User " + userId + " Registered Course " + courseId;
+        return "User " + user.getId() + " Registered Course " + courseId;
     }
 
+    /**
+     *
+     * Team registers course
+     *
+     * @param teamId Long
+     * @param courseId Long
+     * @return String
+     */
     public String registerTeamCourse(Long teamId, Long courseId) {
 
         var team = teamRepository.findById(teamId);
@@ -242,7 +303,7 @@ public class CourseServiceImpl implements CourseService {
 
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
+        if (course.isEmpty() || !course.get().isStatus()) {
             throw new InvalidRequestData("Course not existed");
         }
 
@@ -267,21 +328,32 @@ public class CourseServiceImpl implements CourseService {
         return "Team " + teamId + " Registered Course " + courseId;
     }
 
+    /**
+     *
+     * User unregisters course
+     *
+     * @param userId Long
+     * @param courseId Long
+     * @return String
+     */
     @Override
     public String unregisterCourse(Long userId, Long courseId) {
 
+        // get user from userId
         var user = userRepository.findById(userId);
 
         if (user.isEmpty() || !user.get().isActive()) {
             throw new InvalidRequestData("User not existed or invalid");
         }
 
+        // get course from courseId
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
+        if (course.isEmpty() || !course.get().isStatus()) {
             throw new InvalidRequestData("Course not existed");
         }
 
+        // verify user containing course
         User userStd = user.get();
         Course courseStd = course.get();
 
@@ -293,6 +365,7 @@ public class CourseServiceImpl implements CourseService {
             throw new InvalidRequestData("User has not joined course before");
         }
 
+        // remove user-course relationship
         userStd.getCourses().remove(courseStd);
         courseStd.getUsers().remove(userStd);
 
@@ -301,6 +374,7 @@ public class CourseServiceImpl implements CourseService {
 
         log.info("Remove user role");
 
+        // remove course's roles
         Set<Role> roles = userStd.getRoles();
 
         for (Role role : roles) {
@@ -314,20 +388,32 @@ public class CourseServiceImpl implements CourseService {
         return "User " + userId + " unregistered course " + courseId;
     }
 
+    /**
+     *
+     * Team unregisters course
+     *
+     * @param teamId Long
+     * @param courseId Long
+     * @return String
+     */
     @Override
     public String unregisterTeamCourse(Long teamId, Long courseId) {
+
+        // get team from teamId
         var team = teamRepository.findById(teamId);
 
         if (team.isEmpty() || !team.get().isActive()) {
             throw new InvalidRequestData("Team not existed or invalid");
         }
 
+        // get course from courseId
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
+        if (course.isEmpty() || !course.get().isStatus()) {
             throw new InvalidRequestData("Course not existed");
         }
 
+        // check if team contains course
         Team teamStd = team.get();
         Course courseStd = course.get();
 
@@ -339,6 +425,7 @@ public class CourseServiceImpl implements CourseService {
             throw new InvalidRequestData("Team has not joined course before");
         }
 
+        // remove team-course relationship
         teamStd.getCourses().remove(courseStd);
         courseStd.getTeams().remove(teamStd);
 
@@ -347,6 +434,7 @@ public class CourseServiceImpl implements CourseService {
 
         log.info("Remove team role");
 
+        // remove team's course-related roles
         Set<Role> roles = teamStd.getRoles();
 
         for (Role role : roles) {
@@ -361,23 +449,28 @@ public class CourseServiceImpl implements CourseService {
         return "Team " + teamId + " unregistered course " + courseId;
     }
 
+    /**
+     *
+     * Delete course
+     *
+     * @param courseId Long
+     * @return String
+     */
     @Override
     public String deleteCourse(Long courseId) {
 
+        // get course from courseId
         var course = courseRepository.findById(courseId);
 
         if (course.isEmpty() || !course.get().isStatus()) {
             throw new ResourceNotFound("Course is empty or is deleted");
         }
 
-        course.get().setStatus(false);
-
+        // delete all user-course relationship
         Set<User> users = course.get().getUsers();
 
         for (User user : users) {
             Set<Role> roles = user.getRoles();
-
-            boolean isRelated = false;
 
             for (Role role : roles) {
                 if (role.getName().contains("COURSE") && role.getName().contains("" + course.get().getId())) {
@@ -388,27 +481,36 @@ public class CourseServiceImpl implements CourseService {
 
         }
 
+        course.get().setStatus(false);
+        courseRepository.save(course.get());
+
         return "Delete Courses";
     }
 
+    /**
+     *
+     * get all user's registered courses
+     *
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     @Override
-    public PageResponse<?> getAllRegisteredCourse(Long userId, Integer pageNo, Integer pageSize) {
+    public PageResponse<?> getAllRegisteredCourse(Integer pageNo, Integer pageSize) {
 
-        var user = userRepository.findById(userId);
+        User user = userService.getUserFromAuthentication();
 
-        if (user.isEmpty() || !user.get().isActive()) {
-            throw new InvalidRequestData("User is not existed or invalid");
+        List<Course> currentCourses = new ArrayList<>(user.getCourses().stream().toList());
+
+        List<Course> courses = new ArrayList<>();
+
+        for (Course course : currentCourses) {
+            if (course.isStatus()) {
+                courses.add(course);
+            }
         }
 
-        List<Course> courses = new ArrayList<>(user.get().getCourses().stream().toList());
-
-        Collections.sort(courses, new Comparator<Course>() {
-            @Override
-            public int compare(Course o1, Course o2) {
-
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
+        courses.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
@@ -417,23 +519,32 @@ public class CourseServiceImpl implements CourseService {
                 .totalPages((int) Math.ceil(courses.size() * 1.0 / pageSize))
                 .data(courses.subList(Math.max(pageNo * pageSize, 0),
                         Math.min((pageNo + 1) * pageSize, courses.size()))
-                        .stream().map(course -> createCourseResponses(course)))
+                        .stream().map(this::createCourseResponses))
                 .build();
     }
 
+    /**
+     *
+     * User updates course's details
+     *
+     * @param request UpdateCourseRequest
+     * @return String
+     */
     @Override
     public String updateCourse(UpdateCourseRequest request) {
 
+        // get current course
         Long courseId = request.getCourseId();
 
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
-            throw new ResourceNotFound("Course doesnot exist in database");
+        if (course.isEmpty() || !course.get().isStatus()) {
+            throw new ResourceNotFound("Course does not exist in database");
         }
 
         Course currentCourse = course.get();
 
+        // update course's details
         currentCourse.setName(request.getName());
         currentCourse.setMajor(request.getMajor());
         currentCourse.setLanguage(request.getLanguage());
@@ -447,24 +558,29 @@ public class CourseServiceImpl implements CourseService {
         return "Update course " + courseId + " successfully";
     }
 
+    /**
+     *
+     * Get all course's student list
+     *
+     * @param courseId Long
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
     @Override
     public PageResponse<?> getAllStudentList(Long courseId, Integer pageNo, Integer pageSize) {
 
+        // get course from courseId
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty()) {
+        if (course.isEmpty() || !course.get().isStatus()) {
             throw new InvalidRequestData("Course is not existed");
         }
 
         List<User> users = new ArrayList<>(course.get().getUsers().stream().toList());
 
-        Collections.sort(users, new Comparator<User>() {
-            @Override
-            public int compare(User o1, User o2) {
-
-                return o1.getUsername().compareTo(o2.getUsername());
-            }
-        });
+        // sort student list by username
+        users.sort((o1, o2) -> o1.getUsername().compareTo(o2.getUsername()));
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
@@ -473,16 +589,18 @@ public class CourseServiceImpl implements CourseService {
                 .totalPages((int) Math.ceil(users.size() * 1.0 / pageSize))
                 .data(users.subList(Math.max(pageNo * pageSize, 0),
                                 Math.min((pageNo + 1) * pageSize, users.size()))
-                        .stream().map(user -> userService.createUserDetail(user)))
+                        .stream().map(userService::createUserDetail))
                 .build();
     }
 
+    /**
+     *
+     * Delete course request
+     *
+     * @param courseRequest CourseRequest
+     */
     private void deleteCourseRequest(CourseRequest courseRequest) {
         User user = courseRequest.getUser();
-
-//        if (!user.isActive()) {
-//            throw new InvalidRequestData("Course request error! It belongs to an inactive user");
-//        }
 
         user.getCourseRequests().remove(courseRequest);
 
@@ -490,6 +608,12 @@ public class CourseServiceImpl implements CourseService {
         courseRequestRepository.delete(courseRequest);
     }
 
+    /**
+     *
+     * Create course from course request
+     *
+     * @param request CourseRequest
+     */
     private void createCourse(CourseRequest request) {
         Course course = Course.builder()
                 .name(request.getName())
@@ -507,6 +631,7 @@ public class CourseServiceImpl implements CourseService {
                 .assignmentSubmissions(new HashSet<>())
                 .contestSubmissions(new HashSet<>())
                 .transactions(new HashSet<>())
+                .status(true)
                 .build();
 
         User user = request.getUser();
@@ -522,6 +647,10 @@ public class CourseServiceImpl implements CourseService {
         userRepository.save(user);
 
         Optional<Course> currentCourse = courseRepository.findByName(course.getName());
+
+        if (currentCourse.isEmpty() || !course.isStatus()) {
+            throw new ResourceNotFound("Cant get course with name: " + course.getName());
+        }
 
         Privilege priUpdate = privilegeService.createPrivilege("course", currentCourse.get().getId(), "update", "Update course, id = " + currentCourse.get().getId());
         Privilege priDelete = privilegeService.createPrivilege("course", currentCourse.get().getId(), "delete", "Delete course, id = " + currentCourse.get().getId());
@@ -539,7 +668,6 @@ public class CourseServiceImpl implements CourseService {
 
         roleEditor.addPrivilege(priUpdate);
         roleEditor.addPrivilege(priDelete);
-//        roleEditor.addPrivilege(priSubmit);
 
         roleStudent.addPrivilege(priView);
         roleStudent.addPrivilege(priSubmit);
@@ -571,6 +699,25 @@ public class CourseServiceImpl implements CourseService {
         roleService.saveRole(roleAdmin);
         userRepository.save(user);
 
+    }
+
+
+    /**
+     *
+     * Create course request response from course request
+     *
+     * @param request CourseRequest
+     * @return CourseRequestResponse
+     */
+    private CourseRequestResponse createCourseRequestResponse(CourseRequest request) {
+        return CourseRequestResponse.builder()
+                .id(request.getId())
+                .name(request.getName())
+                .major(request.getMajor())
+                .language(request.getLanguage())
+                .description(request.getDescription())
+                .proposerId(request.getUser().getId())
+                .build();
     }
 
 }

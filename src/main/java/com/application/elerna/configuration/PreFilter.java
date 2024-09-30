@@ -77,7 +77,7 @@ public class PreFilter extends OncePerRequestFilter {
 
         // save authentication into security context
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.get().getAuthorities());
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails.get(), null, userDetails.get().getAuthorities());
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         securityContext.setAuthentication(authenticationToken);
         SecurityContextHolder.setContext(securityContext);

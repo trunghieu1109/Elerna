@@ -6,10 +6,10 @@ import org.springframework.stereotype.Service;
 @Service
 public interface RoleService {
 
-    public Role createRole(String roleName, String resourceType, Long resouceId);
+    Role createRole(String roleName, String resourceType, Long resourceId);
 
-    public Role getRoleByName(String name);
+    Role getRoleByName(String name);
 
-    public void saveRole(Role role);
+    void saveRole(Role role);
 
 }
