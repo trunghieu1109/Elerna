@@ -4,9 +4,9 @@ spring:
       on-profile: dev
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: 'jdbc:mysql://localhost:3306/elerna'
-    username: root
-    password: '@Ttg123456'
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:elerna}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:@Ttg123456}
     jpa:
       properties:
         hibernate:
@@ -36,7 +36,7 @@ jwt:
   resetKey: 7c18b43a1d8227cddb332e67971e790ce35ac2303f4fccfb2a565622f2fe1cec
 
 course:
-  lessonFolder: 'E:\Exercise\Elerna\src\main\resources\Lesson'
-  assignmentFolder: 'E:\Exercise\Elerna\src\main\resources\Assignment'
-  contestFolder: 'E:\Exercise\Elerna\src\main\resources\Contest'
-  submissionFolder: 'E:\Exercise\Elerna\src\main\resources\Submission'
+  lessonFolder: ${LESSON_FOLDER:E:\Exercise\Elerna\src\main\resources\Lesson}
+  assignmentFolder: ${ASSIGN_FOLDER:E:\Exercise\Elerna\src\main\resources\Assignment}
+  contestFolder: ${CONTEST_FOLDER:E:\Exercise\Elerna\src\main\resources\Contest}
+  submissionFolder: ${SUBMISSION_FOLDER:E:\Exercise\Elerna\src\main\resources\Submission}

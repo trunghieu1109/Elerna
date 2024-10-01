@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: '@Ttg123456'
+      MYSQL_DATABASE: 'elerna'
+      MYSQL_USER: 'elerna_user'
+      MYSQL_PASSWORD: '@Ttg123456'
+
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./sql-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - elerna-app
+
+  elerna-api-service:
+    container_name: elerna-service
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: 'mysql'
+      DB_PORT: '3306'
+      DB_NAME: 'elerna'
+      DB_USER: 'elerna_user'
+      DB_PASSWORD: '@Ttg123456'
+      LESSON_FOLDER: '/app/lesson_folder'
+      ASSIGN_FOLDER: '/app/assignment_folder'
+      CONTEST_FOLDER: '/app/contest_folder'
+      SUBMISSION_FOLDER: '/app/submission_folder'
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - elerna-app
+    volumes:
+      - E:\Exercise\Elerna\src\main\resources\Lesson:/app/lesson_folder
+      - E:\Exercise\Elerna\src\main\resources\Assignment:/app/assignment_folder
+      - E:\Exercise\Elerna\src\main\resources\Contest:/app/contest_folder
+      - E:\Exercise\Elerna\src\main\resources\Submission:/app/submission_folder
+
+volumes:
+  db_data:
+
+networks:
+  elerna-app:
+    driver: bridge

@@ -85,7 +85,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             // get file and copy to the destination folder
             String fileName = file.getOriginalFilename();
 
-            String filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
+            String filePath = null;
+
+            if (lessonFolder.contains("\\")) {
+                filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
+            } else {
+                filePath = lessonFolder + "/" + "Course" + courseId + "_" + fileName;
+            }
 
             log.info("filePath: {}", filePath);
 
@@ -163,7 +169,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             // copy file to destination folder
             String fileName = file.getOriginalFilename();
 
-            String filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
+            String filePath = null;
+
+            if (assignmentFolder.contains("\\")) {
+                filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
+            } else {
+                filePath = assignmentFolder + "/" + "Course" + courseId + "_" + fileName;
+            }
 
             log.info("filePath: {}", filePath);
 
@@ -244,7 +256,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             // copy file to destination folder
             String fileName = file.getOriginalFilename();
 
-            String filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
+            String filePath = null;
+
+            if (contestFolder.contains("\\")) {
+                filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
+            } else {
+                filePath = contestFolder + "/" + "Course" + courseId + "_" + fileName;
+            }
 
             log.info("filePath: {}", filePath);
 
@@ -706,7 +724,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             if (file != null) {
                 String fileName = file.getOriginalFilename();
 
-                String filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
+                String filePath = null;
+
+                if (lessonFolder.contains("\\")) {
+                    filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
+                } else {
+                    filePath = lessonFolder + "/" + "Course" + courseId + "_" + fileName;
+                }
 
                 log.info("filePath: {}", filePath);
 
@@ -783,7 +807,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             if (file != null ) {
                 String fileName = file.getOriginalFilename();
 
-                String filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
+                String filePath = null;
+
+                if (assignmentFolder.contains("\\")) {
+                    filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
+                } else {
+                    filePath = assignmentFolder + "/" + "Course" + courseId + "_" + fileName;
+                }
 
                 log.info("filePath: {}", filePath);
 
@@ -864,7 +894,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             if (file == null) {
                 String fileName = file.getOriginalFilename();
 
-                String filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
+                String filePath = null;
+
+                if (contestFolder.contains("\\")) {
+                    filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
+                } else {
+                    filePath = contestFolder + "/" + "Course" + courseId + "_" + fileName;
+                }
 
                 log.info("filePath: {}", filePath);
 
@@ -949,7 +985,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         try {
 
-            String filePath = submissionFolder + "\\" + submissionName;
+            String filePath = null;
+
+            if (submissionFolder.contains("\\")) {
+                filePath = submissionFolder + "\\" + submissionName;
+            } else {
+                filePath = submissionFolder + "/" + submissionName;
+            }
 
             log.info("filePath: {}", filePath);
 
@@ -1030,7 +1072,13 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         try {
 
-            String filePath = submissionFolder + "\\" + submissionName;
+            String filePath = null;
+
+            if (submissionFolder.contains("\\")) {
+                filePath = submissionFolder + "\\" + submissionName;
+            } else {
+                filePath = submissionFolder + "/" + submissionName;
+            }
 
             log.info("filePath: {}", filePath);
 
