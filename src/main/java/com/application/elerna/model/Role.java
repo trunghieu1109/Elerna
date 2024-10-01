@@ -33,7 +33,7 @@ public class Role extends AbstractEntity<Long> {
     )
     private Set<Privilege> privileges = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name="roles_users_teams",
             joinColumns = @JoinColumn(name="role_id"),

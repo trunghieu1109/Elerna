@@ -24,7 +24,7 @@ public class CourseRequest extends AbstractEntity<Long> {
     @Column(name="description")
     private String description;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="proposer_id")
     private User user;
 

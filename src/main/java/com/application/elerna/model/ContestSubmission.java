@@ -15,7 +15,7 @@ public class ContestSubmission extends AbstractEntity<Long> {
     @Column(name="name")
     private String name;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")
     private User user;
 
@@ -23,7 +23,7 @@ public class ContestSubmission extends AbstractEntity<Long> {
     @JoinColumn(name="contest_id")
     private Contest contest;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="course_id")
     private Course course;
 

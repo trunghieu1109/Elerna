@@ -44,7 +44,7 @@ public class Course extends AbstractEntity<Long> {
     @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
     private Set<Transaction> transactions = new HashSet<>();
 
-    @ManyToMany(mappedBy = "courses", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "courses", fetch = FetchType.LAZY)
     private Set<User> users = new HashSet<>();
 
     @ManyToMany(mappedBy = "courses", fetch = FetchType.EAGER)

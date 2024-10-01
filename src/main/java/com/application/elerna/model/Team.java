@@ -21,7 +21,7 @@ public class Team extends AbstractEntity<Long> {
     @Column(name="is_active")
     private boolean isActive;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name="teams_courses",
             joinColumns = @JoinColumn(name="team_id"),
@@ -37,7 +37,7 @@ public class Team extends AbstractEntity<Long> {
     )
     private Set<Role> roles = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name="roles_users_teams",
             joinColumns = @JoinColumn(name="team_id"),
