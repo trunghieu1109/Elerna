@@ -14,8 +14,6 @@ import com.application.elerna.service.JwtService;
 import com.application.elerna.service.PrivilegeService;
 import com.application.elerna.service.RoleService;
 import com.application.elerna.service.UserService;
-import com.application.elerna.utils.TokenEnum;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -29,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +66,7 @@ public class UserServiceImpl implements UserService {
      * @param sortBy String[]
      * @return PageResponse
      */
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllUsersBySort(Integer pageNo, Integer pageSize, String... sortBy) {
         // extract sorting criteria and map to sort orders
         String strPattern = "(\\w+?)(:)(.*)";
@@ -119,6 +119,7 @@ public class UserServiceImpl implements UserService {
      * @param searchBy String[]
      * @return PageResponse
      */
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllUsersBySearch(Integer pageNo, Integer pageSize, String... searchBy) {
 
         Page<User> users = utilsRepository.findUserBySearchCriteria(pageNo, pageSize, searchBy);
@@ -218,6 +219,7 @@ public class UserServiceImpl implements UserService {
      * @return Optional<User>
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> getByUserName(String username) {
         return userRepository.findByUsername(username);
     }
@@ -230,6 +232,7 @@ public class UserServiceImpl implements UserService {
      * @return Optional<User>
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> getByEmail(String email) {
         return userRepository.findByEmail(email);
     }
@@ -242,6 +245,7 @@ public class UserServiceImpl implements UserService {
      * @return UserDetail
      */
     @Override
+    @Transactional(readOnly = true)
     public UserDetail getUserById(Long userId) {
         var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFound("Cant get user by userId: " + userId));
         return createUserDetail(user);

@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -85,6 +86,7 @@ public class TeamServiceImpl implements TeamService {
      * @return TeamResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public TeamResponse getTeamDetails(Long teamId) {
 
         Optional<Team> team = teamRepository.findById(teamId);
@@ -140,6 +142,7 @@ public class TeamServiceImpl implements TeamService {
      * @return PageResponse<TeamResponse>
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllTeam(Integer pageNo, Integer pageSize, String searchBy) {
         Page<Team> teams = utilsRepository.findTeamByName(pageNo, pageSize, searchBy);
 
@@ -162,6 +165,7 @@ public class TeamServiceImpl implements TeamService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getJoinedTeam(Integer pageNo, Integer pageSize, String searchBy) {
 
         // get user from authentication

@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Time;
 import java.util.*;
@@ -83,6 +84,7 @@ public class CourseServiceImpl implements CourseService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllCourseRequest(Integer pageNo, Integer pageSize) {
 
         Pageable pageable = PageRequest.of(pageNo, pageSize);
@@ -189,6 +191,7 @@ public class CourseServiceImpl implements CourseService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllCourseBySearch(Integer pageNo, Integer pageSize, String... searchBy) {
 
         Page<Course> courses = utilsRepository.findCourseBySearchCriteria(pageNo, pageSize, searchBy);
@@ -210,6 +213,7 @@ public class CourseServiceImpl implements CourseService {
      * @return CourseResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public CourseResponse getCourseDetail(Long courseId) {
 
         var course_ = courseRepository.findById(courseId);
@@ -517,6 +521,7 @@ public class CourseServiceImpl implements CourseService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllRegisteredCourse(Integer pageNo, Integer pageSize) {
 
         User user = userService.getUserFromAuthentication();
@@ -540,6 +545,38 @@ public class CourseServiceImpl implements CourseService {
                 .totalPages((int) Math.ceil(courses.size() * 1.0 / pageSize))
                 .data(courses.subList(Math.max(pageNo * pageSize, 0),
                         Math.min((pageNo + 1) * pageSize, courses.size()))
+                        .stream().map(this::createCourseResponses))
+                .build();
+    }
+
+    @Override
+    public PageResponse<?> getAllRegisteredCourseByTeam(Long teamId, Integer pageNo, Integer pageSize) {
+
+        var team = teamRepository.findById(teamId);
+
+        if (team.isEmpty()) {
+            throw new ResourceNotFound("Team not found, teamId: " + teamId);
+        }
+
+        List<Course> currentCourses = new ArrayList<>(team.get().getCourses().stream().toList());
+
+        List<Course> courses = new ArrayList<>();
+
+        for (Course course : currentCourses) {
+            if (course.isStatus()) {
+                courses.add(course);
+            }
+        }
+
+        courses.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages((int) Math.ceil(courses.size() * 1.0 / pageSize))
+                .data(courses.subList(Math.max(pageNo * pageSize, 0),
+                                Math.min((pageNo + 1) * pageSize, courses.size()))
                         .stream().map(this::createCourseResponses))
                 .build();
     }
@@ -589,6 +626,7 @@ public class CourseServiceImpl implements CourseService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllStudentList(Long courseId, Integer pageNo, Integer pageSize) {
 
         // get course from courseId

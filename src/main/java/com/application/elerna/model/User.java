@@ -97,7 +97,7 @@ public class User extends AbstractEntity<Long> implements UserDetails {
         this.courses.add(course);
     }
 
-    public void addAssigmentSubmission(AssignmentSubmission assignmentSubmission) {
+    public void addAssignmentSubmission(AssignmentSubmission assignmentSubmission) {
         this.assignmentSubmissions.add(assignmentSubmission);
     }
 
@@ -112,7 +112,21 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
-        return this.roles.stream().map(role -> new CustomizedGrantedAuthority(role)).toList();
+        Set<CustomizedGrantedAuthority> authoritySet = new HashSet<>();
+
+        for (Role role : this.roles) {
+            authoritySet.add(new CustomizedGrantedAuthority(role));
+        }
+
+        for (Team team : this.teams) {
+            for (Role role : team.getRoles()) {
+                authoritySet.add(new CustomizedGrantedAuthority(role));
+            }
+        }
+
+        return authoritySet.stream().toList();
+
+
     }
 
     @Override

@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({InvalidRequestData.class, ResourceNotFound.class, MessagingException.class, UnsupportedEncodingException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleInvalidRequestData(Exception e, WebRequest webRequest) {
-        log.error("Invalide request data: " + e.getMessage());
+        log.error("Invalid request data: {}", e.getMessage());
 
         return ErrorResponse.builder()
                 .timestamp(new Date(System.currentTimeMillis()))

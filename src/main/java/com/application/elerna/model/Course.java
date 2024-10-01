@@ -50,19 +50,19 @@ public class Course extends AbstractEntity<Long> {
     @ManyToMany(mappedBy = "courses", fetch = FetchType.EAGER)
     private Set<Team> teams = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     private Set<Lesson> lessons = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     private Set<Assignment> assignments = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     private Set<Contest> contests = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     private Set<AssignmentSubmission> assignmentSubmissions = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     private Set<ContestSubmission> contestSubmissions = new HashSet<>();
 
     public void addTransaction(Transaction transaction) {

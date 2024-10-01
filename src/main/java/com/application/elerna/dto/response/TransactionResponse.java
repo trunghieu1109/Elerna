@@ -13,6 +13,12 @@ public class TransactionResponse {
 
     private Long userId;
 
+    private String cardHolder;
+
+    private String email;
+
+    private String phone;
+
     private Long courseId;
 
     private String description;

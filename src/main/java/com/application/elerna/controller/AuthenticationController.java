@@ -50,6 +50,7 @@ public class AuthenticationController {
      * @return ResponseData
      */
     @PostMapping("/signup")
+    @ResponseBody
     public ResponseData<TokenResponse> signUp(@Valid @RequestBody SignUpRequest request) {
 
         log.info("Register new account");

@@ -144,6 +144,21 @@ public class CourseController {
 
     /**
      *
+     * Team gets all registered courses
+     *
+     * @param teamId Long
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
+    @GetMapping("/registered/team")
+    public PageResponse<?> getAllRegisteredCourseByTeam(@RequestParam Long teamId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+
+        return courseService.getAllRegisteredCourseByTeam(teamId, pageNo, pageSize);
+    }
+
+    /**
+     *
      * User update course details
      *
      * @param request UpdateCourseRequest

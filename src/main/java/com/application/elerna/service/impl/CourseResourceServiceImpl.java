@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -302,6 +303,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllResourceOfCourse(Long courseId, String resourceType, Integer pageNo, Integer pageSize) {
 
         // find course
@@ -332,6 +334,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Transactional(readOnly = true)
     private PageResponse<?> getLessonList(Course course, Integer pageNo, Integer pageSize) {
         List<Lesson> lessons = course.getLessons().stream().toList();
 
@@ -353,6 +356,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Transactional(readOnly = true)
     private PageResponse<?> getAssignmentList(Course course, Integer pageNo, Integer pageSize) {
         List<Assignment> assignments = course.getAssignments().stream().toList();
 
@@ -374,6 +378,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Transactional(readOnly = true)
     private PageResponse<?> getContestList(Course course, Integer pageNo, Integer pageSize) {
         List<Contest> contests = course.getContests().stream().toList();
 
@@ -395,6 +400,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Transactional(readOnly = true)
     private PageResponse<?> getAssignmentSubmissionList(Course course, Integer pageNo, Integer pageSize) {
         List<AssignmentSubmission> assignmentSubmissions = course.getAssignmentSubmissions().stream().toList();
 
@@ -416,6 +422,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Transactional(readOnly = true)
     @Override
     public PageResponse<?> getAssignmentSubmissionListFromAssignment(Long assignmentId, Integer pageNo, Integer pageSize) {
 
@@ -449,6 +456,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param pageSize Integer
      * @return PageResponses
      */
+    @Transactional(readOnly = true)
     @Override
     public PageResponse<?> getContestSubmissionListFromContest(Long contestId, Integer pageNo, Integer pageSize) {
 
@@ -609,6 +617,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Transactional(readOnly = true)
     private PageResponse<?> getContestSubmissionList(Course course, Integer pageNo, Integer pageSize) {
         List<ContestSubmission> contestSubmissions = course.getContestSubmissions().stream().toList();
 
@@ -630,6 +639,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @return byte[]
      */
     @Override
+    @Transactional(readOnly = true)
     public byte[] download(String path, String resourceType) throws IOException {
 
         return switch (resourceType) {
@@ -652,6 +662,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @return CourseResourceResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public CourseResourceResponse getResourceDetail(Long resourceId, String resourceType) {
         return switch (resourceType) {
             case "lesson" -> getLessonDetail(resourceId);
@@ -973,7 +984,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             assignment.get().getCourse().addAssignmentSubmission(newAssignSub);
             assignment.get().addAssignmentSubmission(newAssignSub);
-            user.addAssigmentSubmission(newAssignSub);
+            user.addAssignmentSubmission(newAssignSub);
 
             newContent.setAssignmentSubmission(newAssignSub);
 
@@ -1086,6 +1097,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param lessonId Long
      * @return CourseResourceResponse
      */
+    @Transactional(readOnly = true)
     private CourseResourceResponse getLessonDetail(Long lessonId) {
         var currentLesson = lessonRepository.findById(lessonId);
 
@@ -1112,6 +1124,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param assignmentId Long
      * @return CourseResourceResponse
      */
+    @Transactional(readOnly = true)
     private CourseResourceResponse getAssignmentDetail(Long assignmentId) {
         var currentAssignment = assignmentRepository.findById(assignmentId);
 
@@ -1140,6 +1153,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param contestId Long
      * @return CourseResourceResponse
      */
+    @Transactional(readOnly = true)
     private CourseResourceResponse getContestDetail(Long contestId) {
         var currentContest = contestRepository.findById(contestId);
 
@@ -1169,6 +1183,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param submissionId Long
      * @return CourseResourceResponse
      */
+    @Transactional(readOnly = true)
     private CourseResourceResponse getAssignmentSubmissionDetail(Long submissionId) {
         var currentSubmission = assignmentSubmissionRepository.findById(submissionId);
 
@@ -1195,6 +1210,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      * @param submissionId Long
      * @return CourseResourceResponse
      */
+    @Transactional(readOnly = true)
     private CourseResourceResponse getContestSubmissionDetail(Long submissionId) {
         var currentSubmission = contestSubmissionRepository.findById(submissionId);
 

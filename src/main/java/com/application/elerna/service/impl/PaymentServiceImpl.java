@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -91,6 +92,7 @@ public class PaymentServiceImpl implements PaymentService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getAllTransaction(Integer pageNo, Integer pageSize) {
 
         Pageable pageable = PageRequest.of(pageNo, pageSize);
@@ -114,6 +116,7 @@ public class PaymentServiceImpl implements PaymentService {
      * @return TransactionResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public TransactionResponse getTransactionDetails(Long transactionId) {
 
         var transaction = transactionRepository.findById(transactionId);
@@ -134,6 +137,7 @@ public class PaymentServiceImpl implements PaymentService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getTransactionHistory(Integer pageNo, Integer pageSize) {
 
         User user = userService.getUserFromAuthentication();
@@ -162,7 +166,13 @@ public class PaymentServiceImpl implements PaymentService {
      * @return TransactionResponse
      */
     private TransactionResponse createTransactionResponse(Transaction transaction) {
+
+        User user = userService.getUserFromAuthentication();
+
         return TransactionResponse.builder()
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .cardHolder(user.getFirstName() + " " + user.getLastName())
                 .createAt(transaction.getCreatedAt())
                 .updateAt(transaction.getUpdatedAt())
                 .cardNumber(transaction.getCardNumber())
