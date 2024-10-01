@@ -4,6 +4,7 @@ import com.application.elerna.dto.request.PaymentRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.TransactionResponse;
+import com.application.elerna.service.BankAccountService;
 import com.application.elerna.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final BankAccountService bankAccountService;
 
     /**
      *
@@ -26,7 +28,7 @@ public class PaymentController {
      * @return ResponseData<Boolean>
      */
     @PostMapping("/pay")
-    public ResponseData<Boolean> payForCourse(@RequestBody PaymentRequest request) {
+    public ResponseData<String> payForCourse(@RequestBody PaymentRequest request) {
 
         return new ResponseData<>(HttpStatus.OK, "Pay for course", paymentService.pay(request));
     }
@@ -64,10 +66,35 @@ public class PaymentController {
      * @param pageSize Integer
      * @return PageResponse
      */
-    @GetMapping("transaction/history")
+    @GetMapping("/transaction/history")
     public PageResponse<?> getTransactionHistory(Integer pageNo, Integer pageSize) {
 
         return paymentService.getTransactionHistory(pageNo, pageSize);
+    }
+
+    /**
+     *
+     * Get bank account logs
+     *
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
+    @GetMapping("/transaction/bank-logs")
+    public PageResponse<?> getBankAccountLogs(@RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+        return bankAccountService.getBankAccountLogs(pageNo, pageSize);
+    }
+
+    /**
+     *
+     * Deposit money into bank account
+     *
+     * @param amount Double
+     * @return ResponseData<String>
+     */
+    @PostMapping("/transaction/deposit")
+    public ResponseData<String> deposit(@RequestParam Double amount) {
+        return new ResponseData<>(HttpStatus.ACCEPTED, "Deposit money into bank account, amount = " + amount, bankAccountService.deposit(amount));
     }
 
 }

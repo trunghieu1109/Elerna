@@ -6,9 +6,11 @@ import com.application.elerna.dto.request.SignUpRequest;
 import com.application.elerna.dto.response.TokenResponse;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
+import com.application.elerna.model.BankAccount;
 import com.application.elerna.model.Role;
 import com.application.elerna.model.Token;
 import com.application.elerna.model.User;
+import com.application.elerna.repository.BankAccountRepository;
 import com.application.elerna.service.*;
 import com.application.elerna.utils.TokenEnum;
 import jakarta.mail.MessagingException;
@@ -38,6 +40,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final TokenService tokenService;
     private final MailService mailService;
     private final RoleService roleService;
+    private final BankAccountRepository bankAccountRepository;
+    private final BankAccountService bankAccountService;
 
     /**
      * Users sign up to server. They send a request with
@@ -58,6 +62,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (currentUser.isPresent()) {
             log.error("Username had been existed in database");
             throw new InvalidRequestData("Username had been existed in database");
+        }
+
+        var bankAccount = bankAccountRepository.findByCardNumber(request.getCardNumber());
+
+        if (bankAccount.isPresent()) {
+            throw new InvalidRequestData("Bank Account was matched with other user");
         }
 
         // create new user
@@ -81,6 +91,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .transactions(new HashSet<>())
                 .courseRequests(new HashSet<>())
                 .build();
+
+        userService.saveUser(user);
+
+        BankAccount bankAccount1 = bankAccountService.createBankAccount(request, user);
+        bankAccountRepository.save(bankAccount1);
+
+        user.setBankAccount(bankAccount1);
+        userService.saveUser(user);
 
         // create new token
         log.info("Get access token");

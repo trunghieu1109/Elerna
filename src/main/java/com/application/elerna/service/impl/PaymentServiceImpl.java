@@ -3,15 +3,13 @@ package com.application.elerna.service.impl;
 import com.application.elerna.dto.request.PaymentRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.TransactionResponse;
+import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.*;
 import com.application.elerna.repository.CourseRepository;
 import com.application.elerna.repository.TransactionRepository;
 import com.application.elerna.repository.UserRepository;
-import com.application.elerna.service.PaymentService;
-import com.application.elerna.service.PrivilegeService;
-import com.application.elerna.service.RoleService;
-import com.application.elerna.service.UserService;
+import com.application.elerna.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,24 +32,29 @@ public class PaymentServiceImpl implements PaymentService {
     private final UserService userService;
     private final UserRepository userRepository;
     private final PrivilegeService privilegeService;
+    private final BankAccountService bankAccountService;
 
     private final RoleService roleService;
 
     /**
      *
-     * Send payment request to third-party api
+     * Send payment requests
      *
      * @param request PaymentRequest
-     * @return Boolean
+     * @return String
      */
     @Override
-    public boolean pay(PaymentRequest request) {
+    public String pay(PaymentRequest request) {
 
-        // create payment request by third-party api
+        // check user's bank account
+
+        boolean isSuccessfully = bankAccountService.pay(request);
 
         // suppose that it successfully
 
-        boolean isSuccessfully = true;
+        if (!isSuccessfully) {
+            throw new InvalidRequestData("Cant pay for this course");
+        }
 
         var course = courseRepository.findById(request.getCourseId());
 
@@ -65,12 +68,13 @@ public class PaymentServiceImpl implements PaymentService {
 
         User user = userService.getUserFromAuthentication();
 
+        // create transaction
         Transaction transaction = Transaction.builder()
                 .course(currentCourse)
                 .user(user)
                 .description(request.getDescription())
                 .paymentMethod(request.getPaymentMethod())
-                .price(request.getPrice())
+                .price(course.get().getPrice())
                 .status("done")
                 .cardNumber(user.getCardNumber())
                 .build();
@@ -111,7 +115,7 @@ public class PaymentServiceImpl implements PaymentService {
         roleService.saveRole(roleAdmin);
         userRepository.save(user);
 
-        return isSuccessfully;
+        return "User " + user.getId() + " pays for course " + course.get().getId() + " successfully";
     }
     /**
      *
@@ -202,10 +206,10 @@ public class PaymentServiceImpl implements PaymentService {
         return TransactionResponse.builder()
                 .email(user.getEmail())
                 .phone(user.getPhone())
-                .cardHolder(user.getFirstName() + " " + user.getLastName())
+                .cardHolder(user.getBankAccount().getCardHolder())
                 .createAt(transaction.getCreatedAt())
                 .updateAt(transaction.getUpdatedAt())
-                .cardNumber(transaction.getCardNumber())
+                .cardNumber(user.getBankAccount().getCardNumber())
                 .paymentMethod(transaction.getPaymentMethod())
                 .courseId(transaction.getCourse().getId())
                 .userId(transaction.getUser().getId())

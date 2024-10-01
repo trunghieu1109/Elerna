@@ -9,8 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="transactions_log")
-public class TransactionLog extends AbstractEntity<Long> {
+@Table(name="bank_account_logs")
+public class BankAccountLog extends AbstractEntity<Long> {
 
     @Column(name="message_type")
     private String messageType;
@@ -19,8 +19,8 @@ public class TransactionLog extends AbstractEntity<Long> {
     private String message;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name="transaction_id")
-    private Transaction transaction;
+    @JoinColumn(name="account_id")
+    private BankAccount bankAccount;
 
 
 

@@ -28,4 +28,8 @@ public class UserDetail implements Serializable {
 
     private String cardNumber;
 
+    private String cardHolder;
+
+    private Double amount;
+
 }

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public interface PaymentService {
 
-    boolean pay(PaymentRequest request);
+    String pay(PaymentRequest request);
 
     @PreAuthorize("hasPermission(-1, 'transaction', 'all')")
     PageResponse<?> getAllTransaction(Integer pageNo, Integer pageSize);

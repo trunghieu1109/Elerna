@@ -308,6 +308,8 @@ public class UserServiceImpl implements UserService {
                 .phone(user.getPhone())
                 .cardNumber(user.getCardNumber())
                 .dateOfBirth(user.getDateOfBirth())
+                .cardHolder(user.getBankAccount().getCardHolder())
+                .amount(user.getBankAccount().getAmount())
                 .username("Username is hidden")
                 .password("Password is hidden")
                 .build();

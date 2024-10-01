@@ -81,6 +81,9 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private Set<CourseRequest> courseRequests = new HashSet<>();
 
+    @OneToOne(mappedBy = "user", fetch = FetchType.EAGER)
+    private BankAccount bankAccount;
+
     public void addTransaction(Transaction transaction) {
         this.transactions.add(transaction);
     }

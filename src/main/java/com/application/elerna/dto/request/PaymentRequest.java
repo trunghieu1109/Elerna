@@ -6,7 +6,6 @@ import lombok.Getter;
 public class PaymentRequest {
 
     private Long courseId;
-    private Double price;
     private String paymentMethod;
     private String description;
 
