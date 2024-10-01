@@ -4,13 +4,13 @@ import com.application.elerna.dto.request.PaymentRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.TransactionResponse;
 import com.application.elerna.exception.ResourceNotFound;
-import com.application.elerna.model.Course;
-import com.application.elerna.model.Transaction;
-import com.application.elerna.model.User;
+import com.application.elerna.model.*;
 import com.application.elerna.repository.CourseRepository;
 import com.application.elerna.repository.TransactionRepository;
 import com.application.elerna.repository.UserRepository;
 import com.application.elerna.service.PaymentService;
+import com.application.elerna.service.PrivilegeService;
+import com.application.elerna.service.RoleService;
 import com.application.elerna.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +33,9 @@ public class PaymentServiceImpl implements PaymentService {
     private final CourseRepository courseRepository;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final PrivilegeService privilegeService;
+
+    private final RoleService roleService;
 
     /**
      *
@@ -80,9 +83,36 @@ public class PaymentServiceImpl implements PaymentService {
         courseRepository.save(currentCourse);
         userRepository.save(user);
 
+        List<Transaction> transactions = transactionRepository.findAll();
+
+        transactions.sort((t1, t2) -> t1.getId().compareTo(t2.getId()));
+
+        Long lastId = transactions.get(transactions.size() - 1).getId();
+
+        Privilege priView = privilegeService.createPrivilege("transaction", lastId, "view", "View transaction " + lastId);
+        Privilege priDelete = privilegeService.createPrivilege("transaction", lastId, "delete", "Delete transaction " + lastId);
+
+        Role roleAdmin = roleService.createRole("admin", "transaction", lastId);
+
+        priView.addRole(roleAdmin);
+        priDelete.addRole(roleAdmin);
+
+        roleAdmin.addPrivilege(priDelete);
+        roleAdmin.addPrivilege(priView);
+
+        privilegeService.savePrivilege(priDelete);
+        privilegeService.savePrivilege(priView);
+
+        roleService.saveRole(roleAdmin);
+
+        user.addRole(roleAdmin);
+        roleAdmin.addUser(user);
+
+        roleService.saveRole(roleAdmin);
+        userRepository.save(user);
+
         return isSuccessfully;
     }
-
     /**
      *
      * Get all transaction list
