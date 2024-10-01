@@ -485,6 +485,20 @@ public class CourseServiceImpl implements CourseService {
 
         }
 
+        Set<Team> teams = course.get().getTeams();
+
+        for (Team team : teams) {
+            Set<Role> roles = team.getRoles();
+
+            for (Role role : roles) {
+                if (role.getName().contains("COURSE") && role.getName().contains("" + course.get().getId())) {
+                    unregisterTeamCourse(team.getId(), courseId);
+                    break;
+                }
+            }
+
+        }
+
         course.get().setStatus(false);
         courseRepository.save(course.get());
 

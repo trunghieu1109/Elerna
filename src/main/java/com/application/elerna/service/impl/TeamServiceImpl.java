@@ -225,18 +225,13 @@ public class TeamServiceImpl implements TeamService {
         teamRepository.save(team_);
         userRepository.save(user);
 
-        // add team's role for user
-        for (Role role : team_.getRoles()) {
-            if (role.getName().contains("VIEWER")) {
-                user.addRole(role);
-                role.addUser(user);
+        Role roleViewer = roleService.getRoleByName("VIEWER_TEAM_" + team_.getId());
 
-                roleRepository.save(role);
-                userRepository.save(user);
-                log.info("add viewer role to user");
-                break;
-            }
-        }
+        user.addRole(roleViewer);
+        roleViewer.addUser(user);
+
+        roleRepository.save(roleViewer);
+        userRepository.save(user);
 
         return "User " + user.getId() + " joins team successfully";
     }
@@ -285,6 +280,38 @@ public class TeamServiceImpl implements TeamService {
         }
 
         return "User has out of team";
+    }
+
+    /**
+     *
+     * Get team's member list
+     *
+     * @param teamId Long
+     * @param pageNo Integer
+     * @param pageSize Integer
+     * @return PageResponse
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<?> getMemberList(Long teamId, Integer pageNo, Integer pageSize) {
+
+        var team = teamRepository.findById(teamId);
+
+        if (team.isEmpty() || !team.get().isActive()) {
+            throw new ResourceNotFound("Team not ready, id = " + team.get().getId());
+        }
+
+        List<User> users = team.get().getUsers().stream().toList();
+
+        int totalPages = (int) Math.ceil(users.size() * 1.0 / pageSize);
+
+        return PageResponse.builder()
+                .status(HttpStatus.OK.value())
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalPages(totalPages)
+                .data(users.subList(Math.max(pageNo * pageSize, 0), Math.min((pageNo + 1) * pageSize, users.size())).stream().map(userService::createUserDetail))
+                .build();
     }
 
     /**
@@ -344,15 +371,6 @@ public class TeamServiceImpl implements TeamService {
         roleRepository.save(roleEditor);
         roleRepository.save(roleAdmin);
         roleRepository.save(roleViewer);
-
-        team.addRole(roleAdmin);
-        roleAdmin.addTeam(team);
-        team.addRole(roleViewer);
-        roleViewer.addTeam(team);
-        team.addRole(roleEditor);
-        roleEditor.addTeam(team);
-
-        teamRepository.save(team);
 
         roleRepository.save(roleEditor);
         roleRepository.save(roleAdmin);

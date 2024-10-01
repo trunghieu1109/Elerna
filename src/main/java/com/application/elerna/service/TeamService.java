@@ -25,4 +25,7 @@ public interface TeamService {
     String joinTeam(Long teamId);
 
     String outTeam(Long teamId);
+
+    @PreAuthorize("hasPermission(#teamId, 'team', 'update')")
+    PageResponse<?> getMemberList(Long teamId, Integer pageNo, Integer pageSize);
 }

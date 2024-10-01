@@ -4,6 +4,7 @@ import com.application.elerna.dto.request.TeamRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.TeamResponse;
+import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.service.TeamService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -111,6 +112,12 @@ public class TeamController {
     @PostMapping("/out/{teamId}")
     public ResponseData<String> outTeam(@PathVariable("teamId") Long teamId) {
         return new ResponseData<>(HttpStatus.OK, teamService.outTeam(teamId));
+    }
+
+    @GetMapping("/member")
+    public PageResponse<?> getMemberLists(@RequestParam Long teamId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+
+        return teamService.getMemberList(teamId, pageNo, pageSize);
     }
 
 }
