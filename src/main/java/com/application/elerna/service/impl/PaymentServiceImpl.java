@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -44,6 +45,7 @@ public class PaymentServiceImpl implements PaymentService {
      * @return String
      */
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public String pay(PaymentRequest request) {
 
         // check user's bank account

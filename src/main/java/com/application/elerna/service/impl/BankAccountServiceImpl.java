@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -61,6 +63,7 @@ public class BankAccountServiceImpl implements BankAccountService {
      * @param user User
      * @return boolean
      */
+    @Transactional(readOnly = true, isolation = Isolation.SERIALIZABLE)
     private boolean checkRemainingAmount(Double price, User user) {
 
         double remainingAccount = user.getBankAccount().getAmount();
@@ -136,6 +139,7 @@ public class BankAccountServiceImpl implements BankAccountService {
      * @return PageResponse
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<?> getBankAccountLogs(Integer pageNo, Integer pageSize) {
         User user = userService.getUserFromAuthentication();
 
@@ -170,6 +174,7 @@ public class BankAccountServiceImpl implements BankAccountService {
      * @return String
      */
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public String deposit(Double amount) {
 
         User user = userService.getUserFromAuthentication();
