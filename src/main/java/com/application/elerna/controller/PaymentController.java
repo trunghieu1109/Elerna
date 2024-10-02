@@ -6,15 +6,23 @@ import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.TransactionResponse;
 import com.application.elerna.service.BankAccountService;
 import com.application.elerna.service.PaymentService;
+import com.application.elerna.utils.ResponseExample;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/payment")
+@Tag(name="Payment Management Controller", description = "There are functions related to transaction or payment")
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -27,6 +35,11 @@ public class PaymentController {
      * @param request PaymentRequest
      * @return ResponseData<Boolean>
      */
+    @Operation(summary = "Pay for course", description = "User pays for course",
+            responses = { @ApiResponse(responseCode = "200", description = "Pay for course successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = ResponseExample.payExample))
+            )})
     @PostMapping("/pay")
     public ResponseData<String> payForCourse(@RequestBody PaymentRequest request) {
 
@@ -41,6 +54,11 @@ public class PaymentController {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Operation(summary = "Get all transaction list", description = "Admin gets all transaction list",
+            responses = { @ApiResponse(responseCode = "200", description = "Get all transaction list successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = ResponseExample.getAllTransactionExample))
+            )})
     @GetMapping("/transaction/list")
     public PageResponse<?> getAllTransaction(Integer pageNo, Integer pageSize) {
         return paymentService.getAllTransaction(pageNo, pageSize);
@@ -53,6 +71,11 @@ public class PaymentController {
      * @param transactionId Long
      * @return ResponseData<TransactionResponse>
      */
+    @Operation(summary = "Get transaction's details", description = "User or admin gets transaction's details",
+            responses = { @ApiResponse(responseCode = "200", description = "Get transaction's details successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = ResponseExample.getTransactionDetailsExample))
+            )})
     @GetMapping("/transaction/details")
     public ResponseData<TransactionResponse> getTransactionDetails(Long transactionId) {
         return new ResponseData<>(HttpStatus.OK, "Get transaction details successfully", paymentService.getTransactionDetails(transactionId));
@@ -66,6 +89,11 @@ public class PaymentController {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Operation(summary = "Get transaction's history", description = "User gets transaction's history",
+            responses = { @ApiResponse(responseCode = "200", description = "Get transaction's history successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = ResponseExample.getTransactionHistoryExample))
+            )})
     @GetMapping("/transaction/history")
     public PageResponse<?> getTransactionHistory(Integer pageNo, Integer pageSize) {
 
@@ -80,6 +108,11 @@ public class PaymentController {
      * @param pageSize Integer
      * @return PageResponse
      */
+    @Operation(summary = "Get bank account's logs", description = "User gets his bank account's logs",
+            responses = { @ApiResponse(responseCode = "200", description = "Get bank account logs successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = ResponseExample.getBankAccountLogs))
+            )})
     @GetMapping("/transaction/bank-logs")
     public PageResponse<?> getBankAccountLogs(@RequestParam Integer pageNo, @RequestParam Integer pageSize) {
         return bankAccountService.getBankAccountLogs(pageNo, pageSize);
@@ -92,6 +125,11 @@ public class PaymentController {
      * @param amount Double
      * @return ResponseData<String>
      */
+    @Operation(summary = "Deposit money to bank account", description = "User deposits money to his acocunt",
+            responses = { @ApiResponse(responseCode = "200", description = "Deposit money to account successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = ResponseExample.depositExample))
+            )})
     @PostMapping("/transaction/deposit")
     public ResponseData<String> deposit(@RequestParam Double amount) {
         return new ResponseData<>(HttpStatus.ACCEPTED, "Deposit money into bank account, amount = " + amount, bankAccountService.deposit(amount));

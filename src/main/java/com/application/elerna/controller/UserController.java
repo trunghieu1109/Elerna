@@ -117,8 +117,8 @@ public class UserController {
      * @param userId Long
      * @return ResponseData
      */
-    @Operation(summary = "Update user's details", description = "User or admin updates their details",
-            responses = { @ApiResponse(responseCode = "200", description = "Update user's details successfully",
+    @Operation(summary = "Delete user's account", description = "User or admin deletes their account",
+            responses = { @ApiResponse(responseCode = "200", description = "Delete user's details successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.deleteUserExample))
             )})
