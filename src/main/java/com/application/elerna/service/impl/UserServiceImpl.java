@@ -381,9 +381,7 @@ public class UserServiceImpl implements UserService {
         Set<Role> roles = user.get().getRoles();
 
         for (Team team : user.get().getTeams()) {
-            for (Role role : team.getRoles()) {
-                roles.add(role);
-            }
+            roles.addAll(team.getRoles());
         }
 
         return roles.stream().map(role -> role.getName()).toList();

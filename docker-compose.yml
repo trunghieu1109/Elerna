@@ -2,11 +2,8 @@ services:
   mysql:
     image: mysql:8.0
     container_name: mysql-container
-    environment:
-      MYSQL_ROOT_PASSWORD: '@Ttg123456'
-      MYSQL_DATABASE: 'elerna'
-      MYSQL_USER: 'elerna_user'
-      MYSQL_PASSWORD: '@Ttg123456'
+    env_file:
+      - .env
 
     ports:
       - "3306:3306"
@@ -21,16 +18,8 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-    environment:
-      DB_HOST: 'mysql'
-      DB_PORT: '3306'
-      DB_NAME: 'elerna'
-      DB_USER: 'elerna_user'
-      DB_PASSWORD: '@Ttg123456'
-      LESSON_FOLDER: '/app/lesson_folder'
-      ASSIGN_FOLDER: '/app/assignment_folder'
-      CONTEST_FOLDER: '/app/contest_folder'
-      SUBMISSION_FOLDER: '/app/submission_folder'
+    env_file:
+      - .env
     ports:
       - "8080:80"
     depends_on:

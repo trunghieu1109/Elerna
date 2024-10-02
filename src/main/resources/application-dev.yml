@@ -27,7 +27,7 @@ openapi:
     description: This is Elerna, an E-Learning Backend Application
     version: 1.0.0
   server:
-    url: http://localhost:80
+    url: http://localhost:${APP_PORT:80}
     description: Elerna Dev Server
   service:
     api-docs: api-service
