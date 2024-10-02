@@ -22,9 +22,17 @@ springdoc:
   swagger-ui:
     enabled: true
 openapi:
+  info:
+    title: Elerna API Services
+    description: This is Elerna, an E-Learning Backend Application
+    version: 1.0.0
+  server:
+    url: http://localhost:80
+    description: Elerna Dev Server
   service:
     api-docs: api-service
     server: http://localhost:${server.port}
+    package: com.application.elerna.controller
     title: API Document
     version: 1.0.0
 

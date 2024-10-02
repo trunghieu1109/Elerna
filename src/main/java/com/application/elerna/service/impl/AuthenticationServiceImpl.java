@@ -94,7 +94,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         userService.saveUser(user);
 
-        BankAccount bankAccount1 = bankAccountService.createBankAccount(request, user);
+        BankAccount bankAccount1 = bankAccountService.createBankAccount(user);
         bankAccountRepository.save(bankAccount1);
 
         user.setBankAccount(bankAccount1);

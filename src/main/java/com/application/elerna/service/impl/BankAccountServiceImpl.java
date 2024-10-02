@@ -1,7 +1,6 @@
 package com.application.elerna.service.impl;
 
 import com.application.elerna.dto.request.PaymentRequest;
-import com.application.elerna.dto.request.SignUpRequest;
 import com.application.elerna.dto.response.BankAccountLogResponse;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.exception.InvalidRequestData;
@@ -38,12 +37,11 @@ public class BankAccountServiceImpl implements BankAccountService {
      *
      * Create bank account
      *
-     * @param request SignUpRequest
      * @param user User
      * @return BankAccount
      */
     @Override
-    public BankAccount createBankAccount(SignUpRequest request, User user) {
+    public BankAccount createBankAccount(User user) {
 
         return BankAccount.builder()
                 .user(user)
@@ -218,5 +216,16 @@ public class BankAccountServiceImpl implements BankAccountService {
                 .messageType(logs.getMessageType())
                 .messageId(logs.getId())
                 .build();
+    }
+
+    /**
+     *
+     * Save bank account to database
+     *
+     * @param account BankAccount
+     */
+    @Override
+    public void saveBankAccount(BankAccount account) {
+        bankAccountRepository.save(account);
     }
 }

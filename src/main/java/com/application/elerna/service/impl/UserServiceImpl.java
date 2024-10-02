@@ -5,15 +5,14 @@ import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
+import com.application.elerna.model.BankAccount;
 import com.application.elerna.model.Privilege;
 import com.application.elerna.model.Role;
 import com.application.elerna.model.User;
+import com.application.elerna.repository.BankAccountRepository;
 import com.application.elerna.repository.UserRepository;
 import com.application.elerna.repository.UtilsRepository;
-import com.application.elerna.service.JwtService;
-import com.application.elerna.service.PrivilegeService;
-import com.application.elerna.service.RoleService;
-import com.application.elerna.service.UserService;
+import com.application.elerna.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -44,7 +43,7 @@ public class UserServiceImpl implements UserService {
     private final UtilsRepository utilsRepository;
     private final PrivilegeService privilegeService;
     private final RoleService roleService;
-    private final JwtService jwtService;
+    private final BankAccountRepository bankAccountRepository;
 
     /**
      *
@@ -251,6 +250,13 @@ public class UserServiceImpl implements UserService {
         return createUserDetail(user);
     }
 
+    /**
+     *
+     * Update user details
+     *
+     * @param request UserDetailRequest
+     * @return UserDetail
+     */
     @Override
     public UserDetail updateUser(UserDetailRequest request) {
         var user = userRepository.findById(request.getUserId()).orElseThrow(() -> new ResourceNotFound("Cant get user by userId: " + request.getUserId()));
@@ -263,6 +269,15 @@ public class UserServiceImpl implements UserService {
         user.setDateOfBirth(request.getDateOfBirth());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
+
+        if (!user.getCardNumber().equals(user.getBankAccount().getCardNumber())) {
+            BankAccount account = user.getBankAccount();
+            account.setCardNumber(request.getCardNumber());
+
+            bankAccountRepository.save(account);
+            user.setBankAccount(account);
+
+        }
 
         // save user
         userRepository.save(user);
@@ -288,7 +303,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("Delete user successfully, userId: {}", userId);
 
-        return "Delete user + " + userId + " successfully";
+        return "Delete user " + userId + " successfully";
     }
 
     /**

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 public interface BankAccountService {
 
-    BankAccount createBankAccount(SignUpRequest request, User user);
+    BankAccount createBankAccount(User user);
 
     boolean pay(PaymentRequest request);
 
@@ -18,4 +18,5 @@ public interface BankAccountService {
 
     String deposit(Double amount);
 
+    void saveBankAccount(BankAccount account);
 }
