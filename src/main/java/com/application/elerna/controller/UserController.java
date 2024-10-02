@@ -127,4 +127,21 @@ public class UserController {
         return new ResponseData<>(HttpStatus.ACCEPTED, userService.deleteUser(userId));
     }
 
+    /**
+     *
+     * User gets role list
+     *
+     * @param userId Long
+     * @return ResponseData<List<String>>
+     */
+    @Operation(summary = "Get all user's roles", description = "User or admin gets roles",
+            responses = { @ApiResponse(responseCode = "200", description = "Get all user's roles successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = ResponseExample.getUserRoleExample))
+            )})
+    @GetMapping("/role")
+    public ResponseData<List<String>> getUserRole(@RequestParam Long userId) {
+        return new ResponseData<>(HttpStatus.OK, "Get user role successfully", userService.getUserRole(userId));
+    }
+
 }

@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -361,7 +362,28 @@ public class UserServiceImpl implements UserService {
             throw new InvalidRequestData("Principal in token is not UserDetails");
         }
 
-
     }
+
+    /**
+     *
+     * Get all user's roles
+     *
+     * @param userId Long
+     * @return List<String>
+     */
+    @Override
+    public List<String> getUserRole(Long userId) {
+
+        var user = userRepository.findById(userId);
+
+        if (user.isEmpty()) {
+            throw new ResourceNotFound("User not found, id = " + userId);
+        }
+
+        Set<Role> roles = user.get().getRoles();
+
+        return roles.stream().map(role -> role.getName()).toList();
+    }
+
 
 }

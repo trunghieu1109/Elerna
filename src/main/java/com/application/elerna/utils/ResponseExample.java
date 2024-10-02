@@ -103,6 +103,23 @@ public class ResponseExample {
             }
             """;
 
+    public static final String getUserRoleExample = """
+            {
+              "status": 200,
+              "message": "Get user role successfully",
+              "data": [
+                "GLOBAL_TEAM_ADD",
+                "ADMIN_COURSE_22",
+                "GLOBAL_TRANSACTION_ADD",
+                "GLOBAL_COURSE_VIEW",
+                "ADMIN_PROFILE_42",
+                "ADMIN_COURSE_21",
+                "GLOBAL_COURSE_ADD",
+                "GLOBAL_TEAM_VIEW"
+              ]
+            }
+            """;
+
     public static final String depositExample = """
             {
               "status": 202,
@@ -225,6 +242,133 @@ public class ResponseExample {
             }
             """;
 
+    public static final String createTeamExample = """
+            {
+              "status": 201,
+              "message": "Create team successfully",
+              "data": {
+                "name": "Lap trinh Game",
+                "createdAt": "2024-10-02T04:23:36.400+00:00",
+                "updatedAt": "2024-10-02T04:23:36.400+00:00"
+              }
+            }
+            """;
+
+    public static final String getTeamDetailExamples = """
+            {
+              "status": 200,
+              "message": "Get team details successfully",
+              "data": {
+                "name": "Lap trinh Game",
+                "createdAt": "2024-10-02T04:23:36.000+00:00",
+                "updatedAt": "2024-10-02T04:23:36.000+00:00"
+              }
+            }
+            """;
+
+    public static final String deleteTeamExample = """
+            {
+              "status": 200,
+              "message": "Delete team successfully",
+              "data": ""
+            }
+            """;
+
+    public static final String getAllTeamListBySearchExample = """
+            {
+              "status": 200,
+              "pageNo": 0,
+              "pageSize": 2,
+              "totalPages": 12,
+              "data": [
+                {
+                  "name": "Lap Trinh C#",
+                  "createdAt": "2024-09-26T09:20:34.000+00:00",
+                  "updatedAt": "2024-09-26T09:20:34.000+00:00"
+                },
+                {
+                  "name": "Lap Trinh Java and C++",
+                  "createdAt": "2024-09-26T10:09:22.000+00:00",
+                  "updatedAt": "2024-09-26T10:09:22.000+00:00"
+                }
+              ]
+            }
+            """;
+
+    public static final String getJoinedTeamsExample = """
+            {
+               "status": 0,
+               "pageNo": 0,
+               "pageSize": 2,
+               "totalPages": 1,
+               "data": [
+                 {
+                   "name": "Lap Trinh JavaScript Beginner",
+                   "createdAt": "2024-10-01T04:27:42.000+00:00",
+                   "updatedAt": "2024-10-01T04:27:42.000+00:00"
+                 },
+                 {
+                   "name": "Lap trinh Game",
+                   "createdAt": "2024-10-02T04:23:36.000+00:00",
+                   "updatedAt": "2024-10-02T04:23:36.000+00:00"
+                 }
+               ]
+             }
+            """;
+
+    public static final String joinTeamExample = """
+            {
+              "status": 200,
+              "message": "User 34 joins team successfully",
+              "data": null
+            }
+            """;
+
+    public static final String outTeamExample = """
+            {
+              "status": 200,
+              "message": "User has out of team",
+              "data": null
+            }
+            """;
+
+    public static final String getMemberListExample = """
+            {
+              "status": 200,
+              "pageNo": 0,
+              "pageSize": 2,
+              "totalPages": 1,
+              "data": [
+                {
+                  "firstName": "user3095",
+                  "lastName": "account",
+                  "dateOfBirth": "2001-02-09",
+                  "username": "Username is hidden",
+                  "password": "Password is hidden",
+                  "address": "Viet Tri, Phu Tho",
+                  "phone": "032326561",
+                  "email": "user3095@gmail.com",
+                  "cardNumber": "2686130116",
+                  "cardHolder": "user3095 account",
+                  "amount": 100
+                },
+                {
+                  "firstName": "user3096",
+                  "lastName": "account",
+                  "dateOfBirth": "2001-02-09",
+                  "username": "Username is hidden",
+                  "password": "Password is hidden",
+                  "address": "Viet Tri, Phu Tho",
+                  "phone": "032326561",
+                  "email": "user3096@gmail.com",
+                  "cardNumber": "1058882368",
+                  "cardHolder": "user3096 account",
+                  "amount": 100
+                }
+              ]
+            }
+            """;
+
     public static final String loginExample = """
                                             {
                                               "status": 202,
@@ -237,5 +381,72 @@ public class ResponseExample {
                                               }
                                             }
                                             """;
+
+    public static final String signupExample = """
+            {
+              "status": 201,
+              "message": "Account is created",
+              "data": {
+                "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMDIxMDMiLCJpYXQiOjE3Mjc4NDQ3NjQsImV4cCI6MTcyNzg0ODM2NH0.HFRUs9kfIyb8-vngORP9zIJsjujCWzs_IF6gdu-wMY4",
+                "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMDIxMDMiLCJpYXQiOjE3Mjc4NDQ3NjQsImV4cCI6MTcyNzg0ODM2NH0.Y-ZYxMVTE5W04li4GawOc1a1yxntQYazGPwQzCAd9eI",
+                "resetToken": "reset_token",
+                "userId": 45
+              }
+            }
+            """;
+
+    public static final String refreshTokenExample = """
+            {
+                "status": 201,
+                "message": "Access Token is refreshed",
+                "data": {
+                    "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMDIxMDMiLCJpYXQiOjE3Mjc4NDQ5OTksImV4cCI6MTcyNzg0ODU5OX0.HeM2j_w4ByJcdo88qzs7q_cJWeSacrm8EzUFam0ivNI",
+                    "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMDIxMDMiLCJpYXQiOjE3Mjc4NDQ3NjQsImV4cCI6MTcyNzg0ODM2NH0.Y-ZYxMVTE5W04li4GawOc1a1yxntQYazGPwQzCAd9eI",
+                    "resetToken": "reset_token",
+                    "userId": 45
+                }
+            }
+            """;
+
+    public static final String logoutExample = """
+            Logout successfully
+            """;
+
+    public static final String sendForgotPasswordRequest = """
+            {
+              "status": 202,
+              "message": "Forgot password request accepted",
+              "data": {
+                "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMDIxMDMiLCJpYXQiOjE3Mjc4NDQ5OTksImV4cCI6MTcyNzg0ODU5OX0.HeM2j_w4ByJcdo88qzs7q_cJWeSacrm8EzUFam0ivNI",
+                "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMDIxMDMiLCJpYXQiOjE3Mjc4NDQ3NjQsImV4cCI6MTcyNzg0ODM2NH0.Y-ZYxMVTE5W04li4GawOc1a1yxntQYazGPwQzCAd9eI",
+                "resetToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMDIxMDMiLCJpYXQiOjE3Mjc4NDUzNjIsImV4cCI6MTcyNzg0NTY2Mn0.jdJhoLo6CB01Qkqo2KD-pvE0AmtoqKa6IbrmcVfDX2w",
+                "userId": 45
+              }
+            }
+            """;
+
+    public static final String confirmResetExample = """
+            {
+              "status": 202,
+              "message": "Accepted to reset password",
+              "data": null
+            }
+            """;
+
+    public static final String resetPasswordExample = """
+            {
+              "status": 202,
+              "message": "Change password successfully",
+              "data": null
+            }
+            """;
+
+    public static final String sendEmailExample = """
+            {
+              "status": 202,
+              "message": "Send email successfully",
+              "data": "string"
+            }
+            """;
 
 }

@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -44,5 +45,7 @@ public interface UserService {
     UserDetail createUserDetail(User user);
 
     User getUserFromAuthentication();
+
+    List<String> getUserRole(Long userId);
 
 }
