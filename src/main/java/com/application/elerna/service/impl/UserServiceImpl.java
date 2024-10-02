@@ -369,6 +369,7 @@ public class UserServiceImpl implements UserService {
      * @return List<String>
      */
     @Override
+    @Transactional(readOnly = true)
     public List<String> getUserRole(Long userId) {
 
         var user = userRepository.findById(userId);

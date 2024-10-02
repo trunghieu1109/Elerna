@@ -130,7 +130,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             lessonRepository.save(newLesson);
             contentRepository.save(newContent);
 
-            return "Upload Lesson Successfully";
+            return "Upload Lesson Successfully, name: " + newLesson.getName();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -215,7 +215,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             assignmentRepository.save(newAssignment);
             contentRepository.save(newContent);
 
-            return "Upload Assignment Successfully";
+            return "Upload Assignment Successfully, name: " + newAssignment.getName();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -303,7 +303,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             contestRepository.save(newContest);
             contentRepository.save(newContent);
 
-            return "Upload Contest Successfully";
+            return "Upload Contest Successfully, name: " + newContest.getName();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -551,7 +551,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         lessonRepository.save(lesson);
         courseRepository.save(course);
 
-        return "Delete lesson from course successfully";
+        return "Delete " + lesson.getName() + " from course successfully";
     }
 
     /**
@@ -587,7 +587,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         assignmentRepository.save(assignment);
         courseRepository.save(course);
 
-        return "Delete assignment from course successfully";
+        return "Delete " + assignment.getName() + " from course successfully";
     }
 
     /**
@@ -623,7 +623,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         contestRepository.save(contest);
         courseRepository.save(course);
 
-        return "Delete contest from course successfully";
+        return "Delete " + contest.getName() + " from course successfully";
     }
 
     /**
@@ -763,7 +763,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             lessonRepository.save(newLesson);
 
-            return "Update Lesson Successfully";
+            return "Update " + newLesson.getName() + " Successfully";
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -847,7 +847,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             assignmentRepository.save(newAssignment);
 
-            return "Update Assignment Successfully";
+            return "Update " + newAssignment.getName() + " Successfully";
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -891,7 +891,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             newContest.setEndDate(endDate);
             newContest.setDuration(duration);
 
-            if (file == null) {
+            if (file != null) {
                 String fileName = file.getOriginalFilename();
 
                 String filePath = null;
@@ -934,7 +934,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
             contestRepository.save(newContest);
 
-            return "Update Contest Successfully";
+            return "Update " + newContest.getName() + " Successfully";
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -957,10 +957,10 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         if (targetType.equals("assignment")) {
             submitAssignment(user, targetId, file);
-            return "Submit assignment successfully";
+            return "Submit assignment " + targetId + " successfully";
         } else {
             submitContest(user, targetId, file);
-            return "Submit contest successfully";
+            return "Submit contest " + targetId + " successfully";
         }
     }
 

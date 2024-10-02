@@ -690,4 +690,165 @@ public class ResponseExample {
             }
             """;
 
+    public static final String addLessonExample = """
+            {
+              "status": 201,
+              "message": "Upload Lesson Successfully, name: LessonJava2",
+              "data": null
+            }
+            """;
+
+    public static final String addAssignmentExample = """
+            {
+              "status": 201,
+              "message": "Upload Assignment Successfully, name: AssignmentJava1",
+              "data": null
+            }
+            """;
+
+    public static final String addContestExample = """
+            {
+              "status": 201,
+              "message": "Upload Contest Successfully, name: ContestJava1",
+              "data": null
+            }
+            """;
+
+    public static final String getResourceListExample = """
+            {
+              "status": 200,
+              "pageNo": 0,
+              "pageSize": 5,
+              "totalPages": 1,
+              "data": [
+                {
+                  "resourceId": 6,
+                  "resourceType": "Lesson",
+                  "name": "LessonJava1",
+                  "courseId": 24,
+                  "startDate": null,
+                  "endDate": null,
+                  "duration": null,
+                  "content": "E:\\\\Exercise\\\\Elerna\\\\src\\\\main\\\\resources\\\\Lesson\\\\Course24_collision_utils.py"
+                },
+                {
+                  "resourceId": 7,
+                  "resourceType": "Lesson",
+                  "name": "LessonJava2",
+                  "courseId": 24,
+                  "startDate": null,
+                  "endDate": null,
+                  "duration": null,
+                  "content": "E:\\\\Exercise\\\\Elerna\\\\src\\\\main\\\\resources\\\\Lesson\\\\Course24_env_control_for_formal_experiment_violation.py"
+                }
+              ]
+            }
+            """;
+
+    public static final String downloadResourceExample = """
+            {
+              "status": 200,
+              "message": "Download from path Course24_collision_utils.py",
+              "data": "aW1wb3J0IG1hdGgKaW1wb3J0IG51bXB5IGFzIG5wCmltcG9ydCByYW5kb20KZnJvbSBsZ3N2bC5hZ2VudCBpbXBvcnQgTnBjVmVoaWNsZQpmcm9tIG51bWJhIGltcG9ydCBqaXQKZnJvbSBlbnVtIGltcG9ydCBFbnVtCgpOX1ZJT0xBVElPTlMgPSA2CgpOT1RfU1RPUF9GT1JfUEVERVNUUklBTiA9IDAKUEVERVNfVkVISUNMRV9DT0xMSVNJT04gPSAxClNVRERFTl9CUkFLSU5HID0gMgpJTVBST1BFUl9QQVNTSU5HID0gMwpJTVBST1BFUl9MQU5FX0NIQU5HSU5HID0gNApSVU5OSU5HX09OX1JFRF9MSUdIVCA9IDUKCnBlZGVzdHJpYW4gPSBbCiAgICAiQm9iIiwKICAgICJFbnRyZXByZW5ldXJGZW1hbGUiLAogICAgIkhvd2FyZCIsCiAgICAiSm9obnkiLAogICAgIlBhbWVsYSIsCiAgICAiUHJlc2xleSIsCiAgICAiUm9iaW4iLAogICAgIlN0ZXBoZW4iLAogICAgIlpvZSIKXQoKcHJpbnQoIkJvYiIgaW4gcGVkZXN0cmlhbikKCiMgd2hpbGUgVHJ1ZToKI
+            }
+            """;
+
+    public static final String getResourceDetailExample = """
+            {
+              "status": 200,
+              "message": "Get lesson details, lessonId 7",
+              "data": {
+                "resourceId": 7,
+                "resourceType": "Lesson",
+                "name": "LessonJava2",
+                "courseId": 24,
+                "startDate": null,
+                "endDate": null,
+                "duration": null,
+                "content": "E:\\\\Exercise\\\\Elerna\\\\src\\\\main\\\\resources\\\\Lesson\\\\Course24_env_control_for_formal_experiment_violation.py"
+              }
+            }
+            """;
+
+    public static final String updateLessonExample = """
+            {
+               "status": 201,
+               "message": "Update LessonJava7 Successfully",
+               "data": null
+             }
+            """;
+
+    public static final String updateAssignmentExample = """
+            {
+              "status": 201,
+              "message": "Update AssignmentJava2 Successfully",
+              "data": null
+            }
+            """;
+
+    public static final String updateContestExample = """
+            {
+              "status": 201,
+              "message": "Update ContestJava4 Successfully",
+              "data": null
+            }
+            """;
+
+    public static final String submitResourceExample = """
+            {
+              "status": 201,
+              "message": "Submit assignment 17 successfully",
+              "data": null
+            }
+            """;
+
+    public static final String assignmentSubmissionExample = """
+            {
+              "status": 200,
+              "pageNo": 0,
+              "pageSize": 2,
+              "totalPages": 1,
+              "data": [
+                {
+                  "resourceId": 8,
+                  "resourceType": "Assignment Submission",
+                  "name": "Assignment6_Submission1_json_format.py",
+                  "courseId": 24,
+                  "startDate": null,
+                  "endDate": null,
+                  "duration": null,
+                  "content": "E:\\\\Exercise\\\\Elerna\\\\src\\\\main\\\\resources\\\\Submission\\\\Assignment6_Submission1_json_format.py"
+                }
+              ]
+            }
+            """;
+
+    public static final String contestSubmissionExample = """
+            {
+              "status": 200,
+              "pageNo": 0,
+              "pageSize": 2,
+              "totalPages": 1,
+              "data": [
+                {
+                  "resourceId": 7,
+                  "resourceType": "Contest Submission",
+                  "name": "Contest4_Submission1_env_control_for_formal_experiment_violation.py",
+                  "courseId": 24,
+                  "startDate": null,
+                  "endDate": null,
+                  "duration": null,
+                  "content": "E:\\\\Exercise\\\\Elerna\\\\src\\\\main\\\\resources\\\\Submission\\\\Contest4_Submission1_env_control_for_formal_experiment_violation.py"
+                }
+              ]
+            }
+            """;
+
+    public static final String deleteResourceExample = """
+            {
+              "status": 202,
+              "message": "Delete lesson from course successfully, name: LessonJava4",
+              "data": null
+            }
+            """;
 }
