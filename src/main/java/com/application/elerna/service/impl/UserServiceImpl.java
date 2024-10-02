@@ -5,10 +5,7 @@ import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
-import com.application.elerna.model.BankAccount;
-import com.application.elerna.model.Privilege;
-import com.application.elerna.model.Role;
-import com.application.elerna.model.User;
+import com.application.elerna.model.*;
 import com.application.elerna.repository.BankAccountRepository;
 import com.application.elerna.repository.UserRepository;
 import com.application.elerna.repository.UtilsRepository;
@@ -381,6 +378,12 @@ public class UserServiceImpl implements UserService {
         }
 
         Set<Role> roles = user.get().getRoles();
+
+        for (Team team : user.get().getTeams()) {
+            for (Role role : team.getRoles()) {
+                roles.add(role);
+            }
+        }
 
         return roles.stream().map(role -> role.getName()).toList();
     }

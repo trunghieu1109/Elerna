@@ -449,4 +449,245 @@ public class ResponseExample {
             }
             """;
 
+    public static final String sendCreatingCourseRequest = """
+            {
+              "status": 202,
+              "message": "Add new course request to database",
+              "data": null
+            }
+            """;
+
+    public static final String getAllCreatingCourseRequestExample = """
+            {
+              "status": 200,
+              "pageNo": 0,
+              "pageSize": 2,
+              "totalPages": 1,
+              "data": [
+                {
+                  "id": 30,
+                  "proposerId": 34,
+                  "name": "Lap trinh Game bang Unity",
+                  "major": "Game Developer",
+                  "language": "English",
+                  "description": "Game Developing by Unity"
+                }
+              ]
+            }
+            """;
+
+    public static final String approveRequestExample = """
+            {
+              "status": 202,
+              "message": "Approved course request 30, create course Lap trinh Game bang Unity",
+              "data": null
+            }
+            """;
+
+    public static final String rejectRequestExample = """
+            {
+              "status": 202,
+              "message": "Reject course request, requestId 31",
+              "data": null
+            }
+            """;
+
+    public static final String getAllCourseExample = """
+            {
+              "status": 200,
+              "pageNo": 5,
+              "pageSize": 2,
+              "totalPages": 7,
+              "data": [
+                {
+                  "id": 20,
+                  "name": "Lap Trinh Java Spring Security",
+                  "major": "Information Technology, Java Spring Boot",
+                  "duration": "18:57:36",
+                  "rating": 4.5,
+                  "language": "Spainish",
+                  "description": "This is new course for Spring Boot's Beginner",
+                  "price": 100,
+                  "lessons": [],
+                  "assignments": [],
+                  "contests": []
+                },
+                {
+                  "id": 21,
+                  "name": "Lap Trinh Java10",
+                  "major": "Information Technology",
+                  "duration": "00:24:03",
+                  "rating": 5,
+                  "language": "English",
+                  "description": "This is a great course for JavaScript favour",
+                  "price": 0,
+                  "lessons": [],
+                  "assignments": [],
+                  "contests": []
+                }
+              ]
+            }
+            """;
+
+    public static final String courseDetailExample = """
+            {
+              "status": 200,
+              "message": "Get course details, courseId: 20",
+              "data": {
+                "id": 20,
+                "name": "Lap Trinh Java Spring Security",
+                "major": "Information Technology, Java Spring Boot",
+                "duration": "18:57:36",
+                "rating": 4.5,
+                "language": "Spainish",
+                "description": "This is new course for Spring Boot's Beginner",
+                "price": 100,
+                "lessons": [],
+                "assignments": [],
+                "contests": []
+              }
+            }
+            """;
+
+    public static final String registerCourseExample = """
+            {
+              "status": 202,
+              "message": "User 34 Registered Course 20",
+              "data": null
+            }
+            """;
+
+    public static final String teamRegisterCourseExample = """
+            {
+              "status": 202,
+              "message": "Team 47 Registered Course 23",
+              "data": null
+            }
+            """;
+
+    public static final String getUserRegisteredCourse = """
+            {
+              "status": 200,
+              "pageNo": 0,
+              "pageSize": 5,
+              "totalPages": 1,
+              "data": [
+                {
+                  "id": 20,
+                  "name": "Lap Trinh Java Spring Security",
+                  "major": "Information Technology, Java Spring Boot",
+                  "duration": "18:57:36",
+                  "rating": 4.5,
+                  "language": "Spainish",
+                  "description": "This is new course for Spring Boot's Beginner",
+                  "price": 100,
+                  "lessons": [],
+                  "assignments": [],
+                  "contests": []
+                },
+                {
+                  "id": 23,
+                  "name": "Lap trinh Game bang Unity",
+                  "major": "Game Developer",
+                  "duration": "14:20:22",
+                  "rating": 5,
+                  "language": "English",
+                  "description": "Game Developing by Unity",
+                  "price": 0,
+                  "lessons": [],
+                  "assignments": [],
+                  "contests": []
+                }
+              ]
+            }
+            """;
+
+    public static final String getTeamRegisteredCourse = """
+            {
+               "status": 200,
+               "pageNo": 0,
+               "pageSize": 4,
+               "totalPages": 1,
+               "data": [
+                 {
+                   "id": 23,
+                   "name": "Lap trinh Game bang Unity",
+                   "major": "Game Developer",
+                   "duration": "14:20:22",
+                   "rating": 5,
+                   "language": "English",
+                   "description": "Game Developing by Unity",
+                   "price": 0,
+                   "lessons": [],
+                   "assignments": [],
+                   "contests": []
+                 }
+               ]
+             }
+            """;
+
+    public static final String updateCourseExample  = """
+            {
+              "status": 202,
+              "message": "Update course 22 successfully",
+              "data": null
+            }
+            """;
+
+    public static final String getStudentListExample = """
+            {
+              "status": 200,
+              "pageNo": 0,
+              "pageSize": 4,
+              "totalPages": 1,
+              "data": [
+                {
+                  "firstName": "admin",
+                  "lastName": "account",
+                  "dateOfBirth": "2001-02-09",
+                  "username": "Username is hidden",
+                  "password": "Password is hidden",
+                  "address": "Viet Tri, Phu Tho",
+                  "phone": "032326561",
+                  "email": "admin@gmail.com",
+                  "cardNumber": "9120352874",
+                  "cardHolder": "admin account",
+                  "amount": 1099
+                }
+              ]
+            }
+            """;
+
+    public static final String userUnregisterCourseExample = """
+            {
+              "status": 202,
+              "message": "User 34 unregistered course 23",
+              "data": null
+            }
+            """;
+
+    public static final String teamUnregisterCourseExample = """
+            {
+              "status": 200,
+              "message": "Team 47 unregistered course 23",
+              "data": null
+            }
+            """;
+
+    public static final String deleteCourseExample = """
+            {
+              "status": 200,
+              "message": "Delete Courses",
+              "data": null
+            }
+            """;
+
+    public static final String sendRegisteringRequestExample = """
+            {
+              "status": 200,
+              "message": "Get payment screen",
+              "data": "https://localhost:80/course/register/22"
+            }
+            """;
+
 }

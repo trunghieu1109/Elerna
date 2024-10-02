@@ -16,11 +16,11 @@ spring:
         ddl-auto: none
 
 
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    enabled: true
+#springdoc:
+#  api-docs:
+#    enabled: true
+#  swagger-ui:
+#    enabled: true
 openapi:
   info:
     title: Elerna API Services

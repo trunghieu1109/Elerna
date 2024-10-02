@@ -9,9 +9,6 @@ import java.io.Serializable;
 @Getter
 public class AddCourseRequest implements Serializable {
 
-    @NotNull(message = "ProposerId cant be null")
-    private Long proposerId;
-
     @NotBlank(message = "Name cant be blank")
     private String name;
 
