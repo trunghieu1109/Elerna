@@ -37,18 +37,18 @@ Before you begin, ensure you have the following installed:
 
 ### Run application locally
 
-1. Config Parameters:
+**Config Parameters:**
 
 - You need to access to `.env` file to config your DB port, username, password, v.v and application parameter.
- 
-2. Build Application:
+
+**Build Application:**
 
 Access to root folder of application (default is Elerna) and run the following command to build applicaiton. The result is `.jar` file in target folder.
 ```
 mvn clean package -P dev
 ```
 
-3. Run application:
+**Run application:**
 
 You have two options to run application. First, you can run application locally by command:
 
@@ -63,13 +63,6 @@ docker-compose up --build -d
 ```
 
 Application runs on port `80` by default, so you can config to run in other port.
-
-## Help
-
-Any advise for common problems or issues.
-```
-command to run if program contains helper info
-```
 
 ## Author
 
