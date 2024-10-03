@@ -30,7 +30,7 @@ public class Transaction extends AbstractEntity<Long> {
     @Column(name="card_number")
     private String cardNumber;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")
     private User user;
 

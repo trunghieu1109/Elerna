@@ -33,7 +33,7 @@ public class Contest extends AbstractEntity<Long> {
     @JoinColumn(name="course_id")
     private Course course;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="content_id")
     private Content content;
 

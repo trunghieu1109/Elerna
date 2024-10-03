@@ -8,6 +8,7 @@ import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.model.User;
 import com.application.elerna.service.CourseService;
 import com.application.elerna.service.UserService;
+import com.application.elerna.utils.EndpointDescription;
 import com.application.elerna.utils.ResponseExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,7 +38,7 @@ public class CourseController {
      * @param request AddCourseRequest
      * @return ResponseData<String>
      */
-    @Operation(summary = "Send creating course request", description = "User sends creating course request",
+    @Operation(summary = "Send creating course request", description = EndpointDescription.sendCreatingRequestDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Send creating course request successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.sendCreatingCourseRequest))
@@ -56,7 +57,7 @@ public class CourseController {
      * @param pageSize Integer
      * @return PageResponse
      */
-    @Operation(summary = "Get all creating course requests", description = "Admin gets all creating course requests",
+    @Operation(summary = "Get all creating course requests", description = EndpointDescription.getAllCreatingRequestDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Get all creating course requests successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getAllCreatingCourseRequestExample))
@@ -74,7 +75,7 @@ public class CourseController {
      * @param requestId Long
      * @return ResponseData
      */
-    @Operation(summary = "Approve creating course requests", description = "Admin approves creating course requests",
+    @Operation(summary = "Approve creating course requests", description = EndpointDescription.approveCreatingRequest,
             responses = { @ApiResponse(responseCode = "200", description = "Approve creating course requests",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.approveRequestExample))
@@ -92,7 +93,7 @@ public class CourseController {
      * @param requestId Long
      * @return ResponseData
      */
-    @Operation(summary = "Reject creating course requests", description = "Admin rejects creating course requests",
+    @Operation(summary = "Reject creating course requests", description = EndpointDescription.rejectCreatingRequest,
             responses = { @ApiResponse(responseCode = "200", description = "Reject creating course requests",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.rejectRequestExample))

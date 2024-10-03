@@ -117,7 +117,7 @@ public class PaymentServiceImpl implements PaymentService {
         roleService.saveRole(roleAdmin);
         userRepository.save(user);
 
-        return "User " + user.getId() + " pays for course " + course.get().getId() + " successfully";
+        return "User " + user.getId() + " pays for course " + course.get().getId() + " successfully, remaining = " + user.getBankAccount().getAmount();
     }
     /**
      *

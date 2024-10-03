@@ -64,6 +64,10 @@ docker-compose up --build -d
 
 Application runs on port `80` by default, so you can config to run in other port.
 
+After running application, you could access to `http://localhost:{port}/swagger-ui/index.html` to view OpenAPI documents.
+
+![img.png](img.png)
+
 ## Author
 
 Nguyen Trung Hieu 

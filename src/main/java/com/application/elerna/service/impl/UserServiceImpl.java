@@ -380,7 +380,9 @@ public class UserServiceImpl implements UserService {
 
         Set<Role> roles = user.get().getRoles();
 
-        for (Team team : user.get().getTeams()) {
+        Set<Team> teams = user.get().getTeams();
+
+        for (Team team : teams) {
             roles.addAll(team.getRoles());
         }
 

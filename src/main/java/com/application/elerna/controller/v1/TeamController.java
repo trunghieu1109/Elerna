@@ -5,6 +5,7 @@ import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.TeamResponse;
 import com.application.elerna.service.TeamService;
+import com.application.elerna.utils.EndpointDescription;
 import com.application.elerna.utils.ResponseExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,7 +35,7 @@ public class TeamController {
      * @param teamRequest TeamRequest
      * @return ResponseData
      */
-    @Operation(summary = "Create team", description = "User creates team",
+    @Operation(summary = "Create team", description = EndpointDescription.createTeamDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Create team successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.createTeamExample))
@@ -52,7 +53,7 @@ public class TeamController {
      * @param teamId Long
      * @return ResponseData<TeamResponse>
      */
-    @Operation(summary = "Get team's details", description = "User or admin gets team's details",
+    @Operation(summary = "Get team's details", description = EndpointDescription.getTeamDetailDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Get team's details successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getTeamDetailExamples))
@@ -70,7 +71,7 @@ public class TeamController {
      * @param teamId Long
      * @return ResponseData<String>
      */
-    @Operation(summary = "Delete team", description = "User or admin delete team",
+    @Operation(summary = "Delete team", description = EndpointDescription.deleteTeamDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Delete team successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.deleteTeamExample))
@@ -89,7 +90,7 @@ public class TeamController {
      * @param searchBy String
      * @return PageResponse
      */
-    @Operation(summary = "Get all team list by searching", description = "Admin gets all team list by searching",
+    @Operation(summary = "Get all team list by searching", description = EndpointDescription.getTeamListBySearchingDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Get team list by searching successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getAllTeamListBySearchExample))
@@ -109,7 +110,7 @@ public class TeamController {
      * @param searchBy String
      * @return PageResponse
      */
-    @Operation(summary = "Get user's joined teams", description = "User gets all joined teams",
+    @Operation(summary = "Get user's joined teams", description = EndpointDescription.getJoinedTeamDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Get all joined teams successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getJoinedTeamsExample))
@@ -127,7 +128,7 @@ public class TeamController {
      * @param teamId Long
      * @return ResponseData<String>
      */
-    @Operation(summary = "Join team", description = "User joins team",
+    @Operation(summary = "Join team", description = EndpointDescription.joinTeamDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Join team successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.joinTeamExample))
@@ -144,7 +145,7 @@ public class TeamController {
      * @param teamId Long
      * @return ResponseData<String>
      */
-    @Operation(summary = "Out team", description = "User outs team",
+    @Operation(summary = "Out team", description = EndpointDescription.outTeamDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Out team successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.outTeamExample))
@@ -163,7 +164,7 @@ public class TeamController {
      * @param pageSize Integer
      * @return PageResponse
      */
-    @Operation(summary = "Get all team's member list", description = "User or admin gets all team's member list",
+    @Operation(summary = "Get all team's member list", description = EndpointDescription.getMemberListDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Get team's member list successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getMemberListExample))

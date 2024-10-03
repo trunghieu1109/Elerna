@@ -6,6 +6,7 @@ import com.application.elerna.dto.request.SignUpRequest;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.TokenResponse;
 import com.application.elerna.service.AuthenticationService;
+import com.application.elerna.utils.EndpointDescription;
 import com.application.elerna.utils.ResponseExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,7 +39,7 @@ public class AuthenticationController {
      * @param request SignInRequest
      * @return ResponseData
      */
-    @Operation(summary = "Login", description = "User logins",
+    @Operation(summary = "Login", description = EndpointDescription.loginDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Login successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.loginExample))
@@ -58,7 +59,7 @@ public class AuthenticationController {
      * @param request SignUpRequest
      * @return ResponseData
      */
-    @Operation(summary = "Sign up", description = "User signs up",
+    @Operation(summary = "Sign up", description = EndpointDescription.signupDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Sign up successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.signupExample))
@@ -78,7 +79,7 @@ public class AuthenticationController {
      * @param request HttpServletRequest
      * @return ResponseData
      */
-    @Operation(summary = "Refresh token", description = "Admin refreshes",
+    @Operation(summary = "Refresh token", description = EndpointDescription.refreshTokenDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Refresh token successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.refreshTokenExample))
@@ -96,7 +97,7 @@ public class AuthenticationController {
      * @param request HttpServletRequest
      * @return String
      */
-    @Operation(summary = "Log out", description = "User logs out",
+    @Operation(summary = "Log out", description = EndpointDescription.logoutDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Log out successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.logoutExample))
@@ -117,7 +118,7 @@ public class AuthenticationController {
      * @param email String
      * @return ResponseData
      */
-    @Operation(summary = "Send forgot password request", description = "User sends forgot password request",
+    @Operation(summary = "Send forgot password request", description = EndpointDescription.forgotPasswordDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Send forgot password request successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.sendForgotPasswordRequest))
@@ -138,7 +139,7 @@ public class AuthenticationController {
      * @param resetToken String
      * @return ResponseData
      */
-    @Operation(summary = "Confirm request", description = "Admin sends confirm reset request",
+    @Operation(summary = "Confirm request", description = EndpointDescription.confirmResetDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Confirm request successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.confirmResetExample))
@@ -156,7 +157,7 @@ public class AuthenticationController {
      * @param request ResetPasswordRequest
      * @return ResponseData
      */
-    @Operation(summary = "Reset password request", description = "Admin and user resets passsord",
+    @Operation(summary = "Reset password request", description = EndpointDescription.resetPasswordDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Reset password successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.resetPasswordExample))

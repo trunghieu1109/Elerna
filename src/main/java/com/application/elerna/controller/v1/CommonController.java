@@ -2,6 +2,7 @@ package com.application.elerna.controller.v1;
 
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.service.MailService;
+import com.application.elerna.utils.EndpointDescription;
 import com.application.elerna.utils.ResponseExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,7 +38,7 @@ public class CommonController {
      * @param files MultipartFile[]
      * @return ResponseData
      */
-    @Operation(summary = "Send email", description = "Admin sends email",
+    @Operation(summary = "Send email", description = EndpointDescription.sendEmailDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Send email successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.sendEmailExample))

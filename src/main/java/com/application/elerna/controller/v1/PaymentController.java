@@ -6,6 +6,7 @@ import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.TransactionResponse;
 import com.application.elerna.service.BankAccountService;
 import com.application.elerna.service.PaymentService;
+import com.application.elerna.utils.EndpointDescription;
 import com.application.elerna.utils.ResponseExample;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,7 +36,7 @@ public class PaymentController {
      * @param request PaymentRequest
      * @return ResponseData<Boolean>
      */
-    @Operation(summary = "Pay for course", description = "User pays for course",
+    @Operation(summary = "Pay for course", description = EndpointDescription.payDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Pay for course successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.payExample))
@@ -54,7 +55,7 @@ public class PaymentController {
      * @param pageSize Integer
      * @return PageResponse
      */
-    @Operation(summary = "Get all transaction list", description = "Admin gets all transaction list",
+    @Operation(summary = "Get all transaction list", description = EndpointDescription.getAllTransactionDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Get all transaction list successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getAllTransactionExample))
@@ -71,7 +72,7 @@ public class PaymentController {
      * @param transactionId Long
      * @return ResponseData<TransactionResponse>
      */
-    @Operation(summary = "Get transaction's details", description = "User or admin gets transaction's details",
+    @Operation(summary = "Get transaction's details", description = EndpointDescription.getTransactionDetail,
             responses = { @ApiResponse(responseCode = "200", description = "Get transaction's details successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getTransactionDetailsExample))
@@ -89,7 +90,7 @@ public class PaymentController {
      * @param pageSize Integer
      * @return PageResponse
      */
-    @Operation(summary = "Get transaction's history", description = "User gets transaction's history",
+    @Operation(summary = "Get transaction's history", description = EndpointDescription.getTransactionHistory,
             responses = { @ApiResponse(responseCode = "200", description = "Get transaction's history successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getTransactionHistoryExample))
@@ -108,7 +109,7 @@ public class PaymentController {
      * @param pageSize Integer
      * @return PageResponse
      */
-    @Operation(summary = "Get bank account's logs", description = "User gets his bank account's logs",
+    @Operation(summary = "Get bank account's logs", description = EndpointDescription.getBankAccountLogs,
             responses = { @ApiResponse(responseCode = "200", description = "Get bank account logs successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.getBankAccountLogs))
@@ -125,7 +126,7 @@ public class PaymentController {
      * @param amount Double
      * @return ResponseData<String>
      */
-    @Operation(summary = "Deposit money to bank account", description = "User deposits money to his acocunt",
+    @Operation(summary = "Deposit money to bank account", description = EndpointDescription.depositDescription,
             responses = { @ApiResponse(responseCode = "200", description = "Deposit money to account successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             examples = @ExampleObject(value = ResponseExample.depositExample))
