@@ -25,7 +25,7 @@ public class SecurityConfig {
     private final UserService userService;
     private final PreFilter preFilter;
 
-    private final String[] WHITE_LIST = {"/auth/**", "/actuator/**", "/v3/**", "/webjars/**", "/swagger-ui*/*swagger-initializer.js", "/swagger-ui*/**"};
+    private final String[] WHITE_LIST = {"/api/v1/auth/**", "/actuator/**", "/v3/**", "/webjars/**", "/swagger-ui*/*swagger-initializer.js", "/swagger-ui*/**"};
 
     @Bean
     public PasswordEncoder passwordEncoder() {

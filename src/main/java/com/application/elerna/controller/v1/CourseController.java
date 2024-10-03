@@ -1,4 +1,4 @@
-package com.application.elerna.controller;
+package com.application.elerna.controller.v1;
 
 import com.application.elerna.dto.request.AddCourseRequest;
 import com.application.elerna.dto.request.UpdateCourseRequest;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/course")
+@RequestMapping("/api/v1/course")
 @Tag(name="Course Management", description = "These functions allow user to manage their courses")
 public class CourseController {
 
@@ -244,7 +244,7 @@ public class CourseController {
     @Operation(summary = "Get course's student list", description = "Course's Admin gets student list",
             responses = { @ApiResponse(responseCode = "200", description = "Get course's student list successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            examples = @ExampleObject(value = ResponseExample.userUnregisterCourseExample))
+                            examples = @ExampleObject(value = ResponseExample.getStudentListExample))
             )})
     @GetMapping("/student-list")
     public PageResponse<?> getAllStudentList(@RequestParam Long courseId, @RequestParam Integer pageNo, @RequestParam Integer pageSize) {

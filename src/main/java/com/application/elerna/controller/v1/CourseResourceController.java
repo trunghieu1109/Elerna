@@ -1,4 +1,4 @@
-package com.application.elerna.controller;
+package com.application.elerna.controller.v1;
 
 import com.application.elerna.dto.response.CourseResourceResponse;
 import com.application.elerna.dto.response.PageResponse;
@@ -24,7 +24,7 @@ import java.util.Date;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/course/resource")
+@RequestMapping("/api/v1/course/resource")
 @Tag(name="Course Resources Management", description = "These functions allows to manage course's resources, such as lesson, assignment, contest, v.v")
 public class CourseResourceController {
 

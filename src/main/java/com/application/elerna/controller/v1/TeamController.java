@@ -1,10 +1,9 @@
-package com.application.elerna.controller;
+package com.application.elerna.controller.v1;
 
 import com.application.elerna.dto.request.TeamRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.TeamResponse;
-import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.service.TeamService;
 import com.application.elerna.utils.ResponseExample;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/team")
+@RequestMapping("/api/v1/team")
 @Tag(name="Team Management", description = "These functions allows user to manage teams")
 public class TeamController {
 

@@ -1,14 +1,9 @@
-package com.application.elerna.controller;
+package com.application.elerna.controller.v1;
 
 import com.application.elerna.dto.request.UserDetailRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.UserDetail;
-import com.application.elerna.model.BankAccount;
-import com.application.elerna.model.User;
-import com.application.elerna.repository.BankAccountRepository;
-import com.application.elerna.repository.UserRepository;
-import com.application.elerna.service.BankAccountService;
 import com.application.elerna.service.UserService;
 import com.application.elerna.utils.ResponseExample;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,16 +15,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Random;
 
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/user")
+@RequestMapping("/api/v1/user")
 @Tag(name = "User's Information Management Controller",
         description = "These are functions that allow to manage user's information")
 public class UserController {

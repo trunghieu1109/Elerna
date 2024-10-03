@@ -1,4 +1,4 @@
-package com.application.elerna.controller;
+package com.application.elerna.controller.v1;
 
 import com.application.elerna.dto.request.PaymentRequest;
 import com.application.elerna.dto.response.PageResponse;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/payment")
+@RequestMapping("/api/v1/payment")
 @Tag(name="Payment Management Controller", description = "There are functions related to transaction or payment")
 public class PaymentController {
 

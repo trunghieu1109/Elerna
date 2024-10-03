@@ -3,7 +3,6 @@ package com.application.elerna.configuration;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
@@ -32,11 +31,11 @@ public class OpenAPIConfig {
     @Value("${openapi.server.description}")
     private String serverDescription;
 
-    @Value("${openapi.service.api-docs}")
-    private String apiDocs;
+    @Value("${openapi.service.v1.api-docs}")
+    private String apiDocsV1;
 
-    @Value("${openapi.service.package}")
-    private String packageToScan;
+    @Value("${openapi.service.v1.package}")
+    private String packageToScanV1;
 
     @Bean
     public OpenAPI openAPI() {
@@ -56,10 +55,10 @@ public class OpenAPIConfig {
     }
 
     @Bean
-    public GroupedOpenApi groupedOpenApi() {
+    public GroupedOpenApi groupedOpenApiV1() {
         return GroupedOpenApi.builder()
-                .group(apiDocs)
-                .packagesToScan(packageToScan)
+                .group(apiDocsV1)
+                .packagesToScan(packageToScanV1)
                 .build();
     }
 

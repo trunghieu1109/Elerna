@@ -1,4 +1,4 @@
-package com.application.elerna.controller;
+package com.application.elerna.controller.v1;
 
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.service.MailService;
@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,12 +18,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.UnsupportedEncodingException;
-
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/common")
+@RequestMapping("/api/v1/common")
 @Tag(name="Email Service", description = "This is email service that allow to send message via email")
 public class CommonController {
 

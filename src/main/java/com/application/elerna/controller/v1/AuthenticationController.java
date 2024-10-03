@@ -1,12 +1,10 @@
-package com.application.elerna.controller;
+package com.application.elerna.controller.v1;
 
 import com.application.elerna.dto.request.ResetPasswordRequest;
 import com.application.elerna.dto.request.SignInRequest;
 import com.application.elerna.dto.request.SignUpRequest;
 import com.application.elerna.dto.response.ResponseData;
 import com.application.elerna.dto.response.TokenResponse;
-import com.application.elerna.exception.InvalidRequestData;
-import com.application.elerna.model.User;
 import com.application.elerna.service.AuthenticationService;
 import com.application.elerna.utils.ResponseExample;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,11 +22,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/auth/")
+@RequestMapping("/api/v1/auth/")
 @Slf4j
 @Tag(name="Authentication Management", description = "These are functions that helps server manages authentication")
 public class AuthenticationController {
