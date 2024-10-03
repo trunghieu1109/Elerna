@@ -39,7 +39,7 @@ Before you begin, ensure you have the following installed:
 
 **Config Parameters:**
 
-- You need to access to `.env` file to config your DB port, username, password, v.v and application parameter.
+You need to access to `.env` file to config your DB port, username, password, v.v and application parameter.
 
 **Build Application:**
 
