@@ -34,7 +34,7 @@ public class Transaction extends AbstractEntity<Long> {
     @JoinColumn(name="user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="course_id")
     private Course course;
 

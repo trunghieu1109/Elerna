@@ -69,10 +69,10 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     )
     private Set<Course> courses = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<AssignmentSubmission> assignmentSubmissions = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<ContestSubmission> contestSubmissions = new HashSet<>();
 
     @ManyToMany(mappedBy = "users", fetch = FetchType.EAGER)
