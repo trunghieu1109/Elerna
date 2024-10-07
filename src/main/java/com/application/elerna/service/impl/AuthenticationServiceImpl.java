@@ -17,14 +17,17 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -40,6 +43,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final RoleService roleService;
     private final BankAccountRepository bankAccountRepository;
     private final BankAccountService bankAccountService;
+
+    @Value("${jwt.expirationHour}")
+    private long expirationHour;
+
+    @Value("${jwt.expirationDay}")
+    private long expirationDay;
 
     /**
      * Users sign up to server. They send a request with
@@ -88,6 +97,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .courses(new HashSet<>())
                 .transactions(new HashSet<>())
                 .courseRequests(new HashSet<>())
+                .tokens(new HashSet<>())
                 .build();
 
         userService.saveUser(user);
@@ -105,14 +115,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         log.info("Get refresh token");
         String refreshToken = jwtService.generateRefreshToken(username);
 
+        String deviceId = UUID.randomUUID().toString();
+
         Token token = Token.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .status(true)
+                .uuid(deviceId)
+                .accStatus(true)
+                .refStatus(true)
+                .accExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationHour))
+                .refExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationDay))
                 .build();
 
         log.info("User add token");
-        user.setToken(token);
+        user.addToken(token);
         token.setUser(user);
 
         log.info("Add global role to user");
@@ -134,6 +150,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .uuid(deviceId)
                 .resetToken("reset_token")
                 .userId(user.getId())
                 .build();
@@ -153,6 +170,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // extract username, password
         String username = request.getUsername();
         String password = request.getPassword();
+        String uuid = request.getUuid();
 
         // authenticate by authentication manager
         log.info("Authenticate user with username and password");
@@ -167,23 +185,44 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new InvalidRequestData("User is inactive");
         }
 
-        Token token = tokenService.getById(user.getToken().getId());
-        log.info("Token id: {}", token.getId());
 
         // Generate new access token and refresh token
         String accessToken = jwtService.generateAccessToken(username);
         String refreshToken = jwtService.generateRefreshToken(username);
 
-        token.setAccessToken(accessToken);
-        token.setRefreshToken(refreshToken);
-        token.setStatus(true);
+        Token token = tokenService.getByUuid(uuid);
 
-        tokenService.saveToken(token);
+        if (token == null) {
+            token = Token.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .uuid(UUID.randomUUID().toString())
+                    .user(user)
+                    .accStatus(true)
+                    .refStatus(true)
+                    .accExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationHour))
+                    .refExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationDay))
+                    .build();
+
+            tokenService.saveToken(token);
+        } else {
+            log.info("Token uuid: {}", token.getUuid());
+
+            token.setAccessToken(accessToken);
+            token.setAccExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationHour));
+            token.setRefreshToken(refreshToken);
+            token.setRefExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationDay));
+            token.setRefStatus(true);
+            token.setAccStatus(true);
+
+            tokenService.saveToken(token);
+        }
 
         return TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .resetToken("reset_token")
+                .uuid(token.getUuid())
                 .userId(user.getId())
                 .build();
     }
@@ -207,10 +246,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new InvalidRequestData("Refresh: Refresh Token is invalid");
         }
 
+        String accessToken = request.getHeader("Access-Token");
+
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new InvalidRequestData("Refresh: Access Token is invalid");
+        }
+
         // extract username
         String username = jwtService.extractUsername(refreshToken, TokenEnum.REFRESH_TOKEN);
         if (username == null || username.isEmpty()) {
             throw new InvalidRequestData("Refresh: Refresh Token not mapped to any user");
+        }
+
+        String usernameAccess = jwtService.extractUsername(accessToken, TokenEnum.ACCESS_TOKEN);
+        if (usernameAccess == null || usernameAccess.isEmpty()) {
+            throw new InvalidRequestData("Refresh: Access Token not mapped to any user");
+        }
+
+        if (!username.equals(usernameAccess)) {
+            throw new InvalidRequestData("Access token and refresh token are not matched to the same user");
         }
 
         // get user details
@@ -221,21 +275,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new InvalidRequestData("Refresh: Username is not matched or token was expired");
         }
 
+        String deviceId = request.getHeader("Device-Id");
+
         // generate new access token
-        String accessToken = jwtService.generateAccessToken(username);
-        Token currentToken = tokenService.getById(userDetails.getToken().getId());
+        String newAccessToken = jwtService.generateAccessToken(username);
+        Token currentToken = tokenService.getByUuid(deviceId);
 
         if (currentToken == null) {
             throw new ResourceNotFound("Can't get token by id");
         }
 
-        currentToken.setAccessToken(accessToken);
+        currentToken.setAccessToken(newAccessToken);
+        currentToken.setAccExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationHour));
+        currentToken.setAccStatus(true);
         tokenService.saveToken(currentToken);
 
         return TokenResponse.builder()
-                .accessToken(accessToken)
+                .accessToken(newAccessToken)
                 .refreshToken(refreshToken)
                 .userId(userDetails.getId())
+                .uuid(deviceId)
                 .resetToken("reset_token")
                 .build();
     }
@@ -277,7 +336,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         // delete token
-        Token currentToken = tokenService.getById(user.get().getToken().getId());
+        Token currentToken = tokenService.getByUuid(request.getHeader("Device-Id"));
 
         tokenService.deleteToken(currentToken);
 
@@ -292,7 +351,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @return TokenResponse
      */
     @Override
-    public TokenResponse forgotPassword(String email) throws MessagingException, UnsupportedEncodingException {
+    public String forgotPassword(String email) throws MessagingException, UnsupportedEncodingException {
 
         // extract email
         var user = userService.getByEmail(email).orElseThrow(() -> new ResourceNotFound("Cant get user by email: " + email));
@@ -304,7 +363,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // generate reset token
         String resetToken = jwtService.generateResetToken(user.getUsername());
-        Token token = user.getToken();
 
         // send email
         String url = String.format("curl -X 'POST' 'http://localhost/auth/confirm-reset' -H 'accept: */*' -H 'Content-Type: application/json' -d '\"%s\"'", resetToken);
@@ -313,12 +371,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         System.out.println(url);
 
-        return TokenResponse.builder()
-                .accessToken(token.getAccessToken())
-                .refreshToken(token.getRefreshToken())
-                .resetToken(resetToken)
-                .userId(user.getId())
-                .build();
+        return "Send reset password request successfully";
     }
 
     /**

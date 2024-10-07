@@ -56,8 +56,14 @@ public class TokenServiceImpl implements TokenService {
      */
     @Override
     public void deleteToken(Token token) {
-        token.setStatus(false);
+        token.setAccStatus(false);
+        token.setRefStatus(false);
         saveToken(token);
+    }
+
+    @Override
+    public Token getByUuid(String uuid) {
+        return tokenRepository.findByUuid(uuid);
     }
 
 }

@@ -124,7 +124,7 @@ public class AuthenticationController {
                             examples = @ExampleObject(value = ResponseExample.sendForgotPasswordRequest))
             )})
     @PostMapping("/forgot-password")
-    public ResponseData<TokenResponse> forgotPassword(@RequestBody @Email @NotBlank String email) {
+    public ResponseData<String> forgotPassword(@RequestBody @Email @NotBlank String email) {
         try {
             return new ResponseData<>(HttpStatus.ACCEPTED, "Forgot password request accepted", authenticationService.forgotPassword(email));
         } catch (Exception e) {

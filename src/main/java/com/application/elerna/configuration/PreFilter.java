@@ -68,9 +68,9 @@ public class PreFilter extends OncePerRequestFilter {
             return;
         }
 
-        Token currentToken = tokenService.getById(userDetails.get().getToken().getId());
-        if (!currentToken.isStatus()) {
-            log.error("PreFilter: Token is not active");
+        Token currentToken = tokenService.getByUuid(request.getHeader("Device-Id"));
+        if (!currentToken.isAccStatus() || !currentToken.getAccessToken().equals(token)) {
+            log.error("PreFilter: Token is not active or accurate");
             filterChain.doFilter(request, response);
             return;
         }

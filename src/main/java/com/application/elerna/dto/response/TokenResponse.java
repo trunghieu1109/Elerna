@@ -13,6 +13,8 @@ public class TokenResponse implements Serializable {
 
     private String refreshToken;
 
+    private String uuid;
+
     private String resetToken;
 
     private Long userId;

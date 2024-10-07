@@ -21,7 +21,7 @@ public interface AuthenticationService {
 
     void logout(HttpServletRequest request);
 
-    TokenResponse forgotPassword(String email) throws MessagingException, UnsupportedEncodingException;
+    String forgotPassword(String email) throws MessagingException, UnsupportedEncodingException;
 
     String confirm(String resetToken);
 

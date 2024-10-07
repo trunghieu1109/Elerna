@@ -12,4 +12,6 @@ public interface TokenService {
 
     void deleteToken(Token token);
 
+    Token getByUuid(String uuid);
+
 }

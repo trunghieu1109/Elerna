@@ -18,4 +18,6 @@ public class SignInRequest implements Serializable {
     @NotBlank(message = "Username must not a blank")
     private String password;
 
+    private String uuid;
+
 }

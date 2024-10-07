@@ -52,8 +52,8 @@ public class User extends AbstractEntity<Long> implements UserDetails {
     private boolean isActive;
 
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private Token token;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Set<Token> tokens = new HashSet<>();
 
     @ManyToMany(mappedBy = "users", fetch = FetchType.EAGER)
     private Set<Team> teams = new HashSet<>();
@@ -110,6 +110,10 @@ public class User extends AbstractEntity<Long> implements UserDetails {
 
     public void addCourseRequest(CourseRequest courseRequest) {
         this.courseRequests.add(courseRequest);
+    }
+
+    public void addToken(Token token) {
+        this.tokens.add(token);
     }
 
     @Override
