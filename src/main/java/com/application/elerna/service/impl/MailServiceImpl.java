@@ -7,11 +7,14 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.Objects;
 
@@ -32,11 +35,11 @@ public class MailServiceImpl implements MailService {
      * @param recipients String
      * @param subject String
      * @param content String
-     * @param files MultipartFile[]
-     * @return String
+     * @param filePaths String[]
      */
+    @Async
     @Override
-    public String sendEmail(String recipients, String subject, String content, MultipartFile[] files) throws MessagingException, UnsupportedEncodingException {
+    public void sendEmail(String recipients, String subject, String content, String[] filePaths) throws MessagingException, UnsupportedEncodingException {
 
         log.info(" Send Message ");
 
@@ -55,9 +58,11 @@ public class MailServiceImpl implements MailService {
         }
 
         // attach files
-        if (files != null) {
-            for (MultipartFile file : files) {
-                helper.addAttachment(Objects.requireNonNull(file.getOriginalFilename()), file);
+        if (filePaths != null) {
+            for (String filePath : filePaths) {
+                System.out.println(filePath);
+                FileSystemResource file = new FileSystemResource(new File(filePath));
+                helper.addAttachment(Objects.requireNonNull(file.getFilename()), file);
             }
         }
 
@@ -68,7 +73,7 @@ public class MailServiceImpl implements MailService {
         // send message
         mailSender.send(message);
 
-        return "Send email successfully";
+//        return "Send email successfully";
     }
 
 }

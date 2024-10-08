@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Time;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -80,61 +82,48 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             throw new InvalidRequestData("Lesson was existed");
         }
 
-        try {
+        // get file and copy to the destination folder
+        String fileName = file.getOriginalFilename();
 
-            // get file and copy to the destination folder
-            String fileName = file.getOriginalFilename();
+        String filePath = null;
 
-            String filePath = null;
-
-            if (lessonFolder.contains("\\")) {
-                filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
-            } else {
-                filePath = lessonFolder + "/" + "Course" + courseId + "_" + fileName;
-            }
-
-            log.info("filePath: {}", filePath);
-
-            File destFile = new File(filePath);
-
-            if (!destFile.getParentFile().exists()) {
-
-                destFile.getParentFile().mkdirs();
-            }
-
-            file.transferTo(destFile);
-
-            // create new content
-            Optional<Content> content = contentRepository.findByName(name);
-
-            if (content.isPresent()) {
-                throw new InvalidRequestData("Resource has been error, content is existed");
-            }
-
-            Content newContent = Content.builder()
-                    .name(fileName)
-                    .path(filePath)
-                    .build();
-
-            contentRepository.save(newContent);
-
-            // create new lesson
-            Lesson newLesson = Lesson.builder()
-                    .course(course.get())
-                    .name(name)
-                    .content(newContent)
-                    .build();
-
-            newContent.setLesson(newLesson);
-
-            lessonRepository.save(newLesson);
-            contentRepository.save(newContent);
-
-            return "Upload Lesson Successfully, name: " + newLesson.getName();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (lessonFolder.contains("\\")) {
+            filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
+        } else {
+            filePath = lessonFolder + "/" + "Course" + courseId + "_" + fileName;
         }
+
+        CompletableFuture<Boolean> isSuccess = saveFile(filePath, file);
+
+        // create new content
+        Optional<Content> content = contentRepository.findByName(name);
+
+        if (content.isPresent()) {
+            throw new InvalidRequestData("Resource has been error, content is existed");
+        }
+
+        Content newContent = Content.builder()
+                .name(fileName)
+                .path(filePath)
+                .build();
+
+        contentRepository.save(newContent);
+
+        // create new lesson
+        Lesson newLesson = Lesson.builder()
+                .course(course.get())
+                .name(name)
+                .content(newContent)
+                .build();
+
+        newContent.setLesson(newLesson);
+
+        lessonRepository.save(newLesson);
+        contentRepository.save(newContent);
+
+        isSuccess.join();
+
+        return "Upload Lesson Successfully, name: " + newLesson.getName();
     }
 
     /**
@@ -165,61 +154,50 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             throw new InvalidRequestData("Assignment was existed");
         }
 
-        try {
-            // copy file to destination folder
-            String fileName = file.getOriginalFilename();
+        // copy file to destination folder
+        String fileName = file.getOriginalFilename();
 
-            String filePath = null;
+        String filePath = null;
 
-            if (assignmentFolder.contains("\\")) {
-                filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
-            } else {
-                filePath = assignmentFolder + "/" + "Course" + courseId + "_" + fileName;
-            }
-
-            log.info("filePath: {}", filePath);
-
-            File destFile = new File(filePath);
-
-            if (!destFile.getParentFile().exists()) {
-                destFile.getParentFile().mkdirs();
-            }
-
-            file.transferTo(destFile);
-
-            // create new content
-            Optional<Content> content = contentRepository.findByName(name);
-
-            if (content.isPresent()) {
-                throw new InvalidRequestData("Resource has been error, content is existed");
-            }
-
-            Content newContent = Content.builder()
-                    .name(fileName)
-                    .path(filePath)
-                    .build();
-
-            contentRepository.save(newContent);
-
-            // create new assignment
-            Assignment newAssignment = Assignment.builder()
-                    .course(course.get())
-                    .name(name)
-                    .startDate(startDate)
-                    .endDate(endDate)
-                    .content(newContent)
-                    .build();
-
-            newContent.setAssignment(newAssignment);
-
-            assignmentRepository.save(newAssignment);
-            contentRepository.save(newContent);
-
-            return "Upload Assignment Successfully, name: " + newAssignment.getName();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (assignmentFolder.contains("\\")) {
+            filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
+        } else {
+            filePath = assignmentFolder + "/" + "Course" + courseId + "_" + fileName;
         }
+
+        CompletableFuture<Boolean> isSuccess = saveFile(filePath, file);
+
+        // create new content
+        Optional<Content> content = contentRepository.findByName(name);
+
+        if (content.isPresent()) {
+            throw new InvalidRequestData("Resource has been error, content is existed");
+        }
+
+        Content newContent = Content.builder()
+                .name(fileName)
+                .path(filePath)
+                .build();
+
+        contentRepository.save(newContent);
+
+        // create new assignment
+        Assignment newAssignment = Assignment.builder()
+                .course(course.get())
+                .name(name)
+                .startDate(startDate)
+                .endDate(endDate)
+                .content(newContent)
+                .build();
+
+        newContent.setAssignment(newAssignment);
+
+        assignmentRepository.save(newAssignment);
+        contentRepository.save(newContent);
+
+        isSuccess.join();
+
+        return "Upload Assignment Successfully, name: " + newAssignment.getName();
     }
 
     /**
@@ -251,63 +229,51 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             throw new InvalidRequestData("Contest was existed");
         }
 
-        try {
+        // copy file to destination folder
+        String fileName = file.getOriginalFilename();
 
-            // copy file to destination folder
-            String fileName = file.getOriginalFilename();
+        String filePath = null;
 
-            String filePath = null;
-
-            if (contestFolder.contains("\\")) {
-                filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
-            } else {
-                filePath = contestFolder + "/" + "Course" + courseId + "_" + fileName;
-            }
-
-            log.info("filePath: {}", filePath);
-
-            File destFile = new File(filePath);
-
-            if (!destFile.getParentFile().exists()) {
-                destFile.getParentFile().mkdirs();
-            }
-
-            file.transferTo(destFile);
-
-            // create new content
-            Optional<Content> content = contentRepository.findByName(name);
-
-            if (content.isPresent()) {
-                throw new InvalidRequestData("Resource has been error, content is existed");
-            }
-
-            Content newContent = Content.builder()
-                    .name(fileName)
-                    .path(filePath)
-                    .build();
-
-            contentRepository.save(newContent);
-
-            // create new contest
-            Contest newContest = Contest.builder()
-                    .course(course.get())
-                    .name(name)
-                    .startDate(startDate)
-                    .endDate(endDate)
-                    .duration(duration)
-                    .content(newContent)
-                    .build();
-
-            newContent.setContest(newContest);
-
-            contestRepository.save(newContest);
-            contentRepository.save(newContent);
-
-            return "Upload Contest Successfully, name: " + newContest.getName();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (contestFolder.contains("\\")) {
+            filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
+        } else {
+            filePath = contestFolder + "/" + "Course" + courseId + "_" + fileName;
         }
+
+        CompletableFuture<Boolean> isSuccess = saveFile(filePath, file);
+
+        // create new content
+        Optional<Content> content = contentRepository.findByName(name);
+
+        if (content.isPresent()) {
+            throw new InvalidRequestData("Resource has been error, content is existed");
+        }
+
+        Content newContent = Content.builder()
+                .name(fileName)
+                .path(filePath)
+                .build();
+
+        contentRepository.save(newContent);
+
+        // create new contest
+        Contest newContest = Contest.builder()
+                .course(course.get())
+                .name(name)
+                .startDate(startDate)
+                .endDate(endDate)
+                .duration(duration)
+                .content(newContent)
+                .build();
+
+        newContent.setContest(newContest);
+
+        contestRepository.save(newContest);
+        contentRepository.save(newContent);
+
+        isSuccess.join();
+
+        return "Upload Contest Successfully, name: " + newContest.getName();
     }
 
     /**
@@ -354,14 +320,14 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      */
     @Transactional(readOnly = true)
     private PageResponse<?> getLessonList(Course course, Integer pageNo, Integer pageSize) {
-        List<Lesson> lessons = course.getLessons().stream().toList();
+        List<Lesson> lessons = course.getLessons().parallelStream().toList();
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages((int) Math.ceil(lessons.size() * 1.0 / pageSize))
-                .data(lessons.stream().map(lesson -> getLessonDetail(lesson.getId())))
+                .data(lessons.parallelStream().map(lesson -> createLessonResponse(lesson, lesson.getCourse().getId())))
                 .build();
     }
 
@@ -376,14 +342,14 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      */
     @Transactional(readOnly = true)
     private PageResponse<?> getAssignmentList(Course course, Integer pageNo, Integer pageSize) {
-        List<Assignment> assignments = course.getAssignments().stream().toList();
+        List<Assignment> assignments = course.getAssignments().parallelStream().toList();
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages((int) Math.ceil(assignments.size() * 1.0 / pageSize))
-                .data(assignments.stream().map(assignment -> getAssignmentDetail(assignment.getId())))
+                .data(assignments.parallelStream().map(assignment -> createAssignmentResponse(assignment, assignment.getCourse().getId())))
                 .build();
     }
 
@@ -398,14 +364,14 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      */
     @Transactional(readOnly = true)
     private PageResponse<?> getContestList(Course course, Integer pageNo, Integer pageSize) {
-        List<Contest> contests = course.getContests().stream().toList();
+        List<Contest> contests = course.getContests().parallelStream().toList();
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages((int) Math.ceil(contests.size() * 1.0 / pageSize))
-                .data(contests.stream().map(contest -> getContestDetail(contest.getId())))
+                .data(contests.parallelStream().map(contest -> createContestResponse(contest, contest.getCourse().getId())))
                 .build();
     }
 
@@ -420,14 +386,14 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      */
     @Transactional(readOnly = true)
     private PageResponse<?> getAssignmentSubmissionList(Course course, Integer pageNo, Integer pageSize) {
-        List<AssignmentSubmission> assignmentSubmissions = course.getAssignmentSubmissions().stream().toList();
+        List<AssignmentSubmission> assignmentSubmissions = course.getAssignmentSubmissions().parallelStream().toList();
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages((int) Math.ceil(assignmentSubmissions.size() * 1.0 / pageSize))
-                .data(assignmentSubmissions.stream().map(assignmentSubmission -> getAssignmentSubmissionDetail(assignmentSubmission.getId())))
+                .data(assignmentSubmissions.parallelStream().map(assignmentSubmission -> createAssignmentSubmissionResponse(assignmentSubmission, assignmentSubmission.getCourse().getId())))
                 .build();
     }
 
@@ -454,14 +420,14 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         Assignment assignment = currentAssignment.get();
 
         // get submission list
-        List<AssignmentSubmission> assignmentSubmissions = assignment.getAssignmentSubmissions().stream().toList();
+        List<AssignmentSubmission> assignmentSubmissions = assignment.getAssignmentSubmissions().parallelStream().toList();
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages((int) Math.ceil(assignmentSubmissions.size() * 1.0 / pageSize))
-                .data(assignmentSubmissions.stream().map(assignmentSubmission -> getAssignmentSubmissionDetail(assignmentSubmission.getId())))
+                .data(assignmentSubmissions.parallelStream().map(assignmentSubmission -> createAssignmentSubmissionResponse(assignmentSubmission, assignmentSubmission.getCourse().getId())))
                 .build();
     }
 
@@ -488,14 +454,14 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         Contest contest = currentContest.get();
 
         // get submission from contest
-        List<ContestSubmission> contestSubmissions = contest.getContestSubmissions().stream().toList();
+        List<ContestSubmission> contestSubmissions = contest.getContestSubmissions().parallelStream().toList();
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages((int) Math.ceil(contestSubmissions.size() * 1.0 / pageSize))
-                .data(contestSubmissions.stream().map(contestSubmission -> getContestSubmissionDetail(contestSubmission.getId())))
+                .data(contestSubmissions.parallelStream().map(contestSubmission -> createContestSubmissionResponse(contestSubmission, contestSubmission.getCourse().getId())))
                 .build();
     }
 
@@ -637,14 +603,14 @@ public class CourseResourceServiceImpl implements CourseResourceService {
      */
     @Transactional(readOnly = true)
     private PageResponse<?> getContestSubmissionList(Course course, Integer pageNo, Integer pageSize) {
-        List<ContestSubmission> contestSubmissions = course.getContestSubmissions().stream().toList();
+        List<ContestSubmission> contestSubmissions = course.getContestSubmissions().parallelStream().toList();
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages((int) Math.ceil(contestSubmissions.size() * 1.0 / pageSize))
-                .data(contestSubmissions.stream().map(contestSubmission -> getContestSubmissionDetail(contestSubmission.getId())))
+                .data(contestSubmissions.parallelStream().map(contestSubmission -> createContestSubmissionResponse(contestSubmission, contestSubmission.getCourse().getId())))
                 .build();
     }
 
@@ -717,57 +683,46 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             throw new InvalidRequestData("Lesson was not existed");
         }
 
-        try {
-            Lesson newLesson = lesson.get();
-            newLesson.setName(name);
+        Lesson newLesson = lesson.get();
+        newLesson.setName(name);
 
-            if (file != null) {
-                String fileName = file.getOriginalFilename();
+        if (file != null) {
+            String fileName = file.getOriginalFilename();
 
-                String filePath = null;
+            String filePath = null;
 
-                if (lessonFolder.contains("\\")) {
-                    filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
-                } else {
-                    filePath = lessonFolder + "/" + "Course" + courseId + "_" + fileName;
-                }
-
-                log.info("filePath: {}", filePath);
-
-                File destFile = new File(filePath);
-
-                if (!destFile.getParentFile().exists()) {
-                    destFile.getParentFile().mkdirs();
-                }
-
-                file.transferTo(destFile);
-
-                Optional<Content> content = contentRepository.findByName(name);
-
-                if (content.isPresent()) {
-                    throw new InvalidRequestData("Resource has been error, content is existed");
-                }
-
-                Content newContent = Content.builder()
-                        .name(fileName)
-                        .path(filePath)
-                        .build();
-
-                contentRepository.save(newContent);
-
-                newLesson.setContent(newContent);
-
-                newContent.setLesson(newLesson);
-                contentRepository.save(newContent);
+            if (lessonFolder.contains("\\")) {
+                filePath = lessonFolder + "\\" + "Course" + courseId + "_" + fileName;
+            } else {
+                filePath = lessonFolder + "/" + "Course" + courseId + "_" + fileName;
             }
 
-            lessonRepository.save(newLesson);
+            CompletableFuture<Boolean> isSuccess = saveFile(filePath, file);
 
-            return "Update " + newLesson.getName() + " Successfully";
+            Optional<Content> content = contentRepository.findByName(name);
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            if (content.isPresent()) {
+                throw new InvalidRequestData("Resource has been error, content is existed");
+            }
+
+            Content newContent = Content.builder()
+                    .name(fileName)
+                    .path(filePath)
+                    .build();
+
+            contentRepository.save(newContent);
+
+            newLesson.setContent(newContent);
+
+            newContent.setLesson(newLesson);
+            contentRepository.save(newContent);
+            isSuccess.join();
         }
+
+        lessonRepository.save(newLesson);
+
+        return "Update " + newLesson.getName() + " Successfully";
+
     }
 
     /**
@@ -796,62 +751,50 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             throw new InvalidRequestData("Assignment was not existed");
         }
 
-        try {
+        Assignment newAssignment = assignment.get();
 
-            Assignment newAssignment = assignment.get();
+        newAssignment.setName(name);
+        newAssignment.setStartDate(startDate);
+        newAssignment.setEndDate(endDate);
 
-            newAssignment.setName(name);
-            newAssignment.setStartDate(startDate);
-            newAssignment.setEndDate(endDate);
+        if (file != null ) {
+            String fileName = file.getOriginalFilename();
 
-            if (file != null ) {
-                String fileName = file.getOriginalFilename();
+            String filePath = null;
 
-                String filePath = null;
-
-                if (assignmentFolder.contains("\\")) {
-                    filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
-                } else {
-                    filePath = assignmentFolder + "/" + "Course" + courseId + "_" + fileName;
-                }
-
-                log.info("filePath: {}", filePath);
-
-                File destFile = new File(filePath);
-
-                if (!destFile.getParentFile().exists()) {
-                    destFile.getParentFile().mkdirs();
-                }
-
-                file.transferTo(destFile);
-
-                Optional<Content> content = contentRepository.findByName(name);
-
-                if (content.isPresent()) {
-                    throw new InvalidRequestData("Resource has been error, content is existed");
-                }
-
-                Content newContent = Content.builder()
-                        .name(fileName)
-                        .path(filePath)
-                        .build();
-
-                contentRepository.save(newContent);
-
-
-                newAssignment.setContent(newContent);
-
-                newContent.setAssignment(newAssignment);
-                contentRepository.save(newContent);
+            if (assignmentFolder.contains("\\")) {
+                filePath = assignmentFolder + "\\" + "Course" + courseId + "_" + fileName;
+            } else {
+                filePath = assignmentFolder + "/" + "Course" + courseId + "_" + fileName;
             }
 
-            assignmentRepository.save(newAssignment);
+            CompletableFuture<Boolean> isSuccess = saveFile(filePath, file);
 
-            return "Update " + newAssignment.getName() + " Successfully";
+            Optional<Content> content = contentRepository.findByName(name);
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            if (content.isPresent()) {
+                throw new InvalidRequestData("Resource has been error, content is existed");
+            }
+
+            Content newContent = Content.builder()
+                    .name(fileName)
+                    .path(filePath)
+                    .build();
+
+            contentRepository.save(newContent);
+
+
+            newAssignment.setContent(newContent);
+
+            newContent.setAssignment(newAssignment);
+            contentRepository.save(newContent);
+            isSuccess.join();
         }
+
+        assignmentRepository.save(newAssignment);
+
+        return "Update " + newAssignment.getName() + " Successfully";
+
     }
 
     /**
@@ -881,64 +824,53 @@ public class CourseResourceServiceImpl implements CourseResourceService {
             throw new InvalidRequestData("Contest was not existed");
         }
 
-        try {
+        Contest newContest = contest.get();
 
-            Contest newContest = contest.get();
+        newContest.setCourse(course.get());
+        newContest.setName(name);
+        newContest.setStartDate(startDate);
+        newContest.setEndDate(endDate);
+        newContest.setDuration(duration);
 
-            newContest.setCourse(course.get());
-            newContest.setName(name);
-            newContest.setStartDate(startDate);
-            newContest.setEndDate(endDate);
-            newContest.setDuration(duration);
+        if (file != null) {
+            String fileName = file.getOriginalFilename();
 
-            if (file != null) {
-                String fileName = file.getOriginalFilename();
+            String filePath = null;
 
-                String filePath = null;
-
-                if (contestFolder.contains("\\")) {
-                    filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
-                } else {
-                    filePath = contestFolder + "/" + "Course" + courseId + "_" + fileName;
-                }
-
-                log.info("filePath: {}", filePath);
-
-                File destFile = new File(filePath);
-
-                if (!destFile.getParentFile().exists()) {
-                    destFile.getParentFile().mkdirs();
-                }
-
-                file.transferTo(destFile);
-
-                Optional<Content> content = contentRepository.findByName(name);
-
-                if (content.isPresent()) {
-                    throw new InvalidRequestData("Resource has been error, content is existed");
-                }
-
-                Content newContent = Content.builder()
-                        .name(fileName)
-                        .path(filePath)
-                        .build();
-
-                contentRepository.save(newContent);
-
-
-                newContest.setContent(newContent);
-
-                newContent.setContest(newContest);
-                contentRepository.save(newContent);
+            if (contestFolder.contains("\\")) {
+                filePath = contestFolder + "\\" + "Course" + courseId + "_" + fileName;
+            } else {
+                filePath = contestFolder + "/" + "Course" + courseId + "_" + fileName;
             }
 
-            contestRepository.save(newContest);
+            CompletableFuture<Boolean> isSuccess = saveFile(filePath, file);
 
-            return "Update " + newContest.getName() + " Successfully";
+            Optional<Content> content = contentRepository.findByName(name);
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            if (content.isPresent()) {
+                throw new InvalidRequestData("Resource has been error, content is existed");
+            }
+
+            Content newContent = Content.builder()
+                    .name(fileName)
+                    .path(filePath)
+                    .build();
+
+            contentRepository.save(newContent);
+
+
+            newContest.setContent(newContent);
+
+            newContent.setContest(newContest);
+            contentRepository.save(newContent);
+
+            isSuccess.join();
         }
+
+        contestRepository.save(newContest);
+
+        return "Update " + newContest.getName() + " Successfully";
+
     }
 
     /**
@@ -983,71 +915,59 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         String submissionName = "Assignment" + targetId + "_Submission" + (subSize + 1) + "_" + file.getOriginalFilename();
 
-        try {
+        String filePath = null;
 
-            String filePath = null;
-
-            if (submissionFolder.contains("\\")) {
-                filePath = submissionFolder + "\\" + submissionName;
-            } else {
-                filePath = submissionFolder + "/" + submissionName;
-            }
-
-            log.info("filePath: {}", filePath);
-
-            File destFile = new File(filePath);
-
-            if (!destFile.getParentFile().exists()) {
-                destFile.getParentFile().mkdirs();
-            }
-
-            file.transferTo(destFile);
-
-            Optional<Content> content = contentRepository.findByName(submissionName);
-
-            if (content.isPresent()) {
-                throw new InvalidRequestData("Resource has been error, content is existed");
-            }
-
-            Content newContent = Content.builder()
-                    .name(submissionName)
-                    .path(filePath)
-                    .build();
-
-            contentRepository.save(newContent);
-
-            AssignmentSubmission newAssignSub = AssignmentSubmission.builder()
-                    .name(submissionName)
-                    .assignment(assignment.get())
-                    .user(user)
-                    .course(assignment.get().getCourse())
-                    .content(newContent)
-                    .build();
-
-            assignment.get().getCourse().addAssignmentSubmission(newAssignSub);
-            assignment.get().addAssignmentSubmission(newAssignSub);
-            user.addAssignmentSubmission(newAssignSub);
-
-            newContent.setAssignmentSubmission(newAssignSub);
-
-            assignmentSubmissionRepository.save(newAssignSub);
-            contentRepository.save(newContent);
-
-            var curAssSub = assignmentSubmissionRepository.findByName(submissionName);
-
-            if (curAssSub.isEmpty()) {
-                throw new ResourceNotFound("Cant get assignment submission from database");
-            }
-
-            addSubmissionRole(user, curAssSub.get().getId());
-
-            assignmentRepository.save(assignment.get());
-            courseRepository.save(assignment.get().getCourse());
-            userRepository.save(user);
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (submissionFolder.contains("\\")) {
+            filePath = submissionFolder + "\\" + submissionName;
+        } else {
+            filePath = submissionFolder + "/" + submissionName;
         }
+
+        CompletableFuture<Boolean> isSuccess = saveFile(filePath, file);
+
+        Optional<Content> content = contentRepository.findByName(submissionName);
+
+        if (content.isPresent()) {
+            throw new InvalidRequestData("Resource has been error, content is existed");
+        }
+
+        Content newContent = Content.builder()
+                .name(submissionName)
+                .path(filePath)
+                .build();
+
+        contentRepository.save(newContent);
+
+        AssignmentSubmission newAssignSub = AssignmentSubmission.builder()
+                .name(submissionName)
+                .assignment(assignment.get())
+                .user(user)
+                .course(assignment.get().getCourse())
+                .content(newContent)
+                .build();
+
+        assignment.get().getCourse().addAssignmentSubmission(newAssignSub);
+        assignment.get().addAssignmentSubmission(newAssignSub);
+        user.addAssignmentSubmission(newAssignSub);
+
+        newContent.setAssignmentSubmission(newAssignSub);
+
+        assignmentSubmissionRepository.save(newAssignSub);
+        contentRepository.save(newContent);
+
+        var curAssSub = assignmentSubmissionRepository.findByName(submissionName);
+
+        if (curAssSub.isEmpty()) {
+            throw new ResourceNotFound("Cant get assignment submission from database");
+        }
+
+        addSubmissionRole(user, curAssSub.get().getId());
+
+        assignmentRepository.save(assignment.get());
+        courseRepository.save(assignment.get().getCourse());
+        userRepository.save(user);
+
+        isSuccess.join();
 
     }
 
@@ -1070,71 +990,60 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         String submissionName = "Contest" + targetId + "_Submission" + (subSize + 1) + "_" + file.getOriginalFilename();
 
-        try {
 
-            String filePath = null;
+        String filePath = null;
 
-            if (submissionFolder.contains("\\")) {
-                filePath = submissionFolder + "\\" + submissionName;
-            } else {
-                filePath = submissionFolder + "/" + submissionName;
-            }
-
-            log.info("filePath: {}", filePath);
-
-            File destFile = new File(filePath);
-
-            if (!destFile.getParentFile().exists()) {
-                destFile.getParentFile().mkdirs();
-            }
-
-            file.transferTo(destFile);
-
-            Optional<Content> content = contentRepository.findByName(submissionName);
-
-            if (content.isPresent()) {
-                throw new InvalidRequestData("Resource has been error, content is existed");
-            }
-
-            Content newContent = Content.builder()
-                    .name(submissionName)
-                    .path(filePath)
-                    .build();
-
-            contentRepository.save(newContent);
-
-            ContestSubmission newContestSub = ContestSubmission.builder()
-                    .name(submissionName)
-                    .contest(contest.get())
-                    .user(user)
-                    .course(contest.get().getCourse())
-                    .content(newContent)
-                    .build();
-
-            user.addContestSubmission(newContestSub);
-            contest.get().addContestSubmission(newContestSub);
-            contest.get().getCourse().addContestSubmission(newContestSub);
-
-            newContent.setContestSubmission(newContestSub);
-
-            contestSubmissionRepository.save(newContestSub);
-            contentRepository.save(newContent);
-
-            var curContestSub = contestSubmissionRepository.findByName(submissionName);
-
-            if (curContestSub.isEmpty()) {
-                throw new ResourceNotFound("Contest submission not found");
-            }
-
-            addSubmissionRole(user, curContestSub.get().getId());
-
-            contestRepository.save(contest.get());
-            courseRepository.save(contest.get().getCourse());
-            userRepository.save(user);
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (submissionFolder.contains("\\")) {
+            filePath = submissionFolder + "\\" + submissionName;
+        } else {
+            filePath = submissionFolder + "/" + submissionName;
         }
+
+        CompletableFuture<Boolean> isSuccess = saveFile(filePath, file);
+
+        Optional<Content> content = contentRepository.findByName(submissionName);
+
+        if (content.isPresent()) {
+            throw new InvalidRequestData("Resource has been error, content is existed");
+        }
+
+        Content newContent = Content.builder()
+                .name(submissionName)
+                .path(filePath)
+                .build();
+
+        contentRepository.save(newContent);
+
+        ContestSubmission newContestSub = ContestSubmission.builder()
+                .name(submissionName)
+                .contest(contest.get())
+                .user(user)
+                .course(contest.get().getCourse())
+                .content(newContent)
+                .build();
+
+        user.addContestSubmission(newContestSub);
+        contest.get().addContestSubmission(newContestSub);
+        contest.get().getCourse().addContestSubmission(newContestSub);
+
+        newContent.setContestSubmission(newContestSub);
+
+        contestSubmissionRepository.save(newContestSub);
+        contentRepository.save(newContent);
+
+        var curContestSub = contestSubmissionRepository.findByName(submissionName);
+
+        if (curContestSub.isEmpty()) {
+            throw new ResourceNotFound("Contest submission not found");
+        }
+
+        addSubmissionRole(user, curContestSub.get().getId());
+
+        contestRepository.save(contest.get());
+        courseRepository.save(contest.get().getCourse());
+        userRepository.save(user);
+
+        isSuccess.join();
 
     }
 
@@ -1156,13 +1065,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         Lesson lesson = currentLesson.get();
 
-        return CourseResourceResponse.builder()
-                .name(lesson.getName())
-                .resourceId(lesson.getId())
-                .resourceType("Lesson")
-                .courseId(lesson.getCourse().getId())
-                .content(lesson.getContent().getPath())
-                .build();
+        return createLessonResponse(lesson, lesson.getCourse().getId());
     }
 
     /**
@@ -1183,15 +1086,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         Assignment assignment = currentAssignment.get();
 
-        return CourseResourceResponse.builder()
-                .name(assignment.getName())
-                .resourceId(assignment.getId())
-                .resourceType("Assignment")
-                .courseId(assignment.getCourse().getId())
-                .content(assignment.getContent().getPath())
-                .startDate(assignment.getStartDate())
-                .endDate(assignment.getEndDate())
-                .build();
+        return createAssignmentResponse(assignment, assignment.getCourse().getId());
     }
 
     /**
@@ -1212,16 +1107,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         Contest contest = currentContest.get();
 
-        return CourseResourceResponse.builder()
-                .name(contest.getName())
-                .resourceId(contest.getId())
-                .resourceType("Contest")
-                .courseId(contest.getCourse().getId())
-                .content(contest.getContent().getPath())
-                .startDate(contest.getStartDate())
-                .endDate(contest.getEndDate())
-                .duration(contest.getDuration())
-                .build();
+        return createContestResponse(contest, contest.getCourse().getId());
     }
 
     /**
@@ -1242,13 +1128,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         AssignmentSubmission assignmentSubmission = currentSubmission.get();
 
-        return CourseResourceResponse.builder()
-                .name(assignmentSubmission.getContent().getName())
-                .resourceId(assignmentSubmission.getId())
-                .resourceType("Assignment Submission")
-                .courseId(assignmentSubmission.getCourse().getId())
-                .content(assignmentSubmission.getContent().getPath())
-                .build();
+        return createAssignmentSubmissionResponse(assignmentSubmission, assignmentSubmission.getCourse().getId());
     }
 
     /**
@@ -1269,13 +1149,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
 
         ContestSubmission contestSubmission = currentSubmission.get();
 
-        return CourseResourceResponse.builder()
-                .name(contestSubmission.getContent().getName())
-                .resourceId(contestSubmission.getId())
-                .resourceType("Contest Submission")
-                .courseId(contestSubmission.getCourse().getId())
-                .content(contestSubmission.getContent().getPath())
-                .build();
+        return createContestSubmissionResponse(contestSubmission, contestSubmission.getCourse().getId());
     }
 
     /**
@@ -1312,4 +1186,80 @@ public class CourseResourceServiceImpl implements CourseResourceService {
         roleService.saveRole(roleAdmin);
         userRepository.save(user);
     }
+
+    @Async
+    private CompletableFuture<Boolean> saveFile(String filePath, MultipartFile file) {
+        log.info("filePath: {}", filePath);
+
+        File destFile = new File(filePath);
+
+        if (!destFile.getParentFile().exists()) {
+            destFile.getParentFile().mkdirs();
+        }
+
+        try {
+            file.transferTo(destFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return CompletableFuture.completedFuture(true);
+
+    }
+
+    private CourseResourceResponse createLessonResponse(Lesson lesson, Long courseId) {
+        return CourseResourceResponse.builder()
+                .name(lesson.getName())
+                .resourceId(lesson.getId())
+                .resourceType("Lesson")
+                .courseId(courseId)
+                .content(lesson.getContent().getPath())
+                .build();
+    }
+
+    private CourseResourceResponse createAssignmentResponse(Assignment assignment, Long courseId) {
+        return CourseResourceResponse.builder()
+                .name(assignment.getName())
+                .resourceId(assignment.getId())
+                .resourceType("Assignment")
+                .courseId(courseId)
+                .content(assignment.getContent().getPath())
+                .startDate(assignment.getStartDate())
+                .endDate(assignment.getEndDate())
+                .build();
+    }
+
+    private CourseResourceResponse createContestResponse(Contest contest, Long courseId) {
+        return CourseResourceResponse.builder()
+                .name(contest.getName())
+                .resourceId(contest.getId())
+                .resourceType("Contest")
+                .courseId(courseId)
+                .content(contest.getContent().getPath())
+                .startDate(contest.getStartDate())
+                .endDate(contest.getEndDate())
+                .duration(contest.getDuration())
+                .build();
+    }
+
+    private CourseResourceResponse createAssignmentSubmissionResponse(AssignmentSubmission assignmentSubmission, Long courseId) {
+        return CourseResourceResponse.builder()
+                .name(assignmentSubmission.getContent().getName())
+                .resourceId(assignmentSubmission.getId())
+                .resourceType("Assignment Submission")
+                .courseId(courseId)
+                .content(assignmentSubmission.getContent().getPath())
+                .build();
+    }
+
+    private CourseResourceResponse createContestSubmissionResponse(ContestSubmission contestSubmission, Long courseId) {
+        return CourseResourceResponse.builder()
+                .name(contestSubmission.getContent().getName())
+                .resourceId(contestSubmission.getId())
+                .resourceType("Contest Submission")
+                .courseId(courseId)
+                .content(contestSubmission.getContent().getPath())
+                .build();
+    }
+
 }

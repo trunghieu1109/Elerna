@@ -35,7 +35,7 @@ public class CommonController {
      * @param recipients String
      * @param subject String
      * @param content String
-     * @param files MultipartFile[]
+     * @param filePaths String[]
      * @return ResponseData
      */
     @Operation(summary = "Send email", description = EndpointDescription.sendEmailDescription,
@@ -44,10 +44,11 @@ public class CommonController {
                             examples = @ExampleObject(value = ResponseExample.sendEmailExample))
             )})
     @PostMapping("/send-email")
-    public ResponseData<String> sendEmail(@RequestParam String recipients, @RequestParam String subject, @RequestParam String content, @RequestParam(required = false) MultipartFile[] files) {
+    public ResponseData<String> sendEmail(@RequestParam String recipients, @RequestParam String subject, @RequestParam String content, @RequestParam(required = false) String[] filePaths) {
 
         try {
-            return new ResponseData<>(HttpStatus.OK, "Send message", mailService.sendEmail(recipients, subject, content, files));
+            mailService.sendEmail(recipients, subject, content, filePaths);
+            return new ResponseData<>(HttpStatus.OK, "Send message");
         } catch (Exception e) {
             log.error(e.getMessage());
             return new ResponseData<>(HttpStatus.BAD_REQUEST, "Cant send message");

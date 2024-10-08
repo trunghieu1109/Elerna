@@ -46,7 +46,7 @@ public class CourseController {
     @PostMapping("/add")
     public ResponseData<String> sendCourseRequest(@RequestBody AddCourseRequest request) {
 
-        return new ResponseData<>(HttpStatus.ACCEPTED, courseService.addCourseRequest(request));
+        return new ResponseData<>(HttpStatus.ACCEPTED, "Send request successfully", courseService.addCourseRequest(request));
     }
 
     /**

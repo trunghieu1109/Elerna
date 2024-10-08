@@ -9,6 +9,6 @@ import java.io.UnsupportedEncodingException;
 @Service
 public interface MailService {
 
-    String sendEmail(String recipients, String subject, String content, MultipartFile[] files) throws MessagingException, UnsupportedEncodingException;
+    void sendEmail(String recipients, String subject, String content, String[] filePaths) throws MessagingException, UnsupportedEncodingException;
 
 }

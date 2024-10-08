@@ -365,9 +365,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String resetToken = jwtService.generateResetToken(user.getUsername());
 
         // send email
-        String url = String.format("curl -X 'POST' 'http://localhost/auth/confirm-reset' -H 'accept: */*' -H 'Content-Type: application/json' -d '\"%s\"'", resetToken);
+        String url = String.format("curl -X 'POST' 'http://localhost/api/v1/auth/confirm-reset' -H 'accept: */*' -H 'Content-Type: application/json' -d '\"%s\"'", resetToken);
 
-//        mailService.sendEmail(email, "Confirm Reset Password", url, null);
+        mailService.sendEmail("hieukunno1109@gmail.com", "Confirm Reset Password", url, null);
 
         System.out.println(url);
 

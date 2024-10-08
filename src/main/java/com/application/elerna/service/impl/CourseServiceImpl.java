@@ -19,11 +19,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Time;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -96,7 +99,7 @@ public class CourseServiceImpl implements CourseService {
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages(courseRequests.getTotalPages())
-                .data(courseRequests.stream().map(this::createCourseRequestResponse))
+                .data(courseRequests.getContent().parallelStream().map(this::createCourseRequestResponse))
                 .build();
     }
 
@@ -107,6 +110,7 @@ public class CourseServiceImpl implements CourseService {
      * @param requestId Long
      * @return String
      */
+    
     @Override
     public String approveCourseRequest(Long requestId) {
 
@@ -131,13 +135,21 @@ public class CourseServiceImpl implements CourseService {
 
         // create course
         log.info("Create new course");
-        createCourse(request);
+        CompletableFuture<Boolean> isCreatedFuture = createCourse(request);
 
         // delete course request
         log.info("Delete course request from database");
-        deleteCourseRequest(request);
+        CompletableFuture<Boolean> isDeletedFuture = deleteCourseRequest(request);
 
-        return "Approved course request " + requestId + ", create course " + request.getName();
+        try {
+            if (isCreatedFuture.get() && isDeletedFuture.get()) {
+                return "Approved course request " + requestId + ", create course " + request.getName();
+            } else {
+                return "Failed to approve request";
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -196,12 +208,16 @@ public class CourseServiceImpl implements CourseService {
 
         Page<Course> courses = utilsRepository.findCourseBySearchCriteria(pageNo, pageSize, searchBy);
 
+//        Pageable pageable = PageRequest.of(pageNo, pageSize);
+//
+//        Page<Course> courses = courseRepository.findAll(pageable);
+
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
                 .pageNo(pageNo)
                 .pageSize(pageSize)
                 .totalPages(courses.getTotalPages())
-                .data(courses.stream().map(this::createCourseResponses))
+                .data(courses.getContent().parallelStream().map(this::createCourseResponses))
                 .build();
     }
 
@@ -244,9 +260,9 @@ public class CourseServiceImpl implements CourseService {
                 .id(course.getId())
                 .description(course.getDescription())
                 .language(course.getLanguage())
-                .assignments(course.getAssignments().stream().map(Assignment::getName).toList())
-                .lessons(course.getLessons().stream().map(Lesson::getName).toList())
-                .contests(course.getContests().stream().map(Contest::getName).toList())
+                .assignments(course.getAssignments().parallelStream().map(Assignment::getName).toList())
+                .lessons(course.getLessons().parallelStream().map(Lesson::getName).toList())
+                .contests(course.getContests().parallelStream().map(Contest::getName).toList())
                 .build();
     }
 
@@ -559,7 +575,7 @@ public class CourseServiceImpl implements CourseService {
                 .totalPages((int) Math.ceil(courses.size() * 1.0 / pageSize))
                 .data(courses.subList(Math.max(pageNo * pageSize, 0),
                         Math.min((pageNo + 1) * pageSize, courses.size()))
-                        .stream().map(this::createCourseResponses))
+                        .parallelStream().map(this::createCourseResponses))
                 .build();
     }
 
@@ -591,7 +607,7 @@ public class CourseServiceImpl implements CourseService {
                 .totalPages((int) Math.ceil(courses.size() * 1.0 / pageSize))
                 .data(courses.subList(Math.max(pageNo * pageSize, 0),
                                 Math.min((pageNo + 1) * pageSize, courses.size()))
-                        .stream().map(this::createCourseResponses))
+                        .parallelStream().map(this::createCourseResponses))
                 .build();
     }
 
@@ -672,13 +688,16 @@ public class CourseServiceImpl implements CourseService {
      *
      * @param courseRequest CourseRequest
      */
-    private void deleteCourseRequest(CourseRequest courseRequest) {
+    @Async
+    private CompletableFuture<Boolean> deleteCourseRequest(CourseRequest courseRequest) {
         User user = courseRequest.getUser();
 
         user.getCourseRequests().remove(courseRequest);
 
         userRepository.save(user);
         courseRequestRepository.delete(courseRequest);
+
+        return CompletableFuture.completedFuture(true);
     }
 
     /**
@@ -687,7 +706,8 @@ public class CourseServiceImpl implements CourseService {
      *
      * @param request CourseRequest
      */
-    private void createCourse(CourseRequest request) {
+    @Async
+    private CompletableFuture<Boolean> createCourse(CourseRequest request) {
         Course course = Course.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -771,6 +791,8 @@ public class CourseServiceImpl implements CourseService {
 
         roleService.saveRole(roleAdmin);
         userRepository.save(user);
+
+        return CompletableFuture.completedFuture(true);
 
     }
 
