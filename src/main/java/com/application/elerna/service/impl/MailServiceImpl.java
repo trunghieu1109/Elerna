@@ -47,10 +47,12 @@ public class MailServiceImpl implements MailService {
         MimeMessage message = mailSender.createMimeMessage();
 
         // config helper
+        log.info("Config message");
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         helper.setFrom(mailFrom, "Hieu Nguyen");
 
         // setup receivers
+        log.info("Set recipients");
         if (recipients.contains(",")) {
             helper.setTo(InternetAddress.parse(recipients));
         } else {
@@ -58,6 +60,7 @@ public class MailServiceImpl implements MailService {
         }
 
         // attach files
+        log.info("Attach files");
         if (filePaths != null) {
             for (String filePath : filePaths) {
                 System.out.println(filePath);
@@ -67,10 +70,14 @@ public class MailServiceImpl implements MailService {
         }
 
         // set subject and content
+        log.info("Set subject");
         helper.setSubject(subject);
+
+        log.info("Set content");
         helper.setText(content, true);
 
         // send message
+        log.info("Send");
         mailSender.send(message);
 
 //        return "Send email successfully";

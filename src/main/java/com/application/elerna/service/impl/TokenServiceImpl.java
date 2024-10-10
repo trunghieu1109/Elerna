@@ -44,7 +44,7 @@ public class TokenServiceImpl implements TokenService {
         if (token.isPresent())
             return token.get();
         else {
-            throw new ResourceNotFound("Cant not find suitable token");
+            throw new ResourceNotFound("Token", "tokenId: " + tokenId);
         }
     }
 

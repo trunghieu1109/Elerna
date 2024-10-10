@@ -15,6 +15,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 @Slf4j
@@ -51,6 +52,32 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
                 .cause(HttpStatus.UNPROCESSABLE_ENTITY.getReasonPhrase())
                 .message(errors.toString())
+                .path("")
+                .build();
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ErrorResponse handleNoSuchException(Exception ex) {
+        log.error("No such item in collections, message: {}", ex.getMessage());
+
+        return ErrorResponse.builder()
+                .timestamp(new Date(System.currentTimeMillis()))
+                .status(HttpStatus.NOT_FOUND.value())
+                .cause(HttpStatus.NOT_FOUND.getReasonPhrase())
+                .message(ex.getMessage())
+                .path("")
+                .build();
+    }
+
+    @ExceptionHandler(InvalidAccountRemaining.class)
+    public ErrorResponse handleInvalidAccountRemaining(Exception ex) {
+        log.error("Account remaining is not enough for new transaction, message: {}", ex.getMessage());
+
+        return ErrorResponse.builder()
+                .timestamp(new Date(System.currentTimeMillis()))
+                .status(HttpStatus.BAD_REQUEST.value())
+                .cause(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(ex.getMessage())
                 .path("")
                 .build();
     }

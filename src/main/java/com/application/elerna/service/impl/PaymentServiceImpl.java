@@ -3,8 +3,10 @@ package com.application.elerna.service.impl;
 import com.application.elerna.dto.request.PaymentRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.TransactionResponse;
+import com.application.elerna.exception.InvalidAccountRemaining;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
+import com.application.elerna.exception.ResourceNotReady;
 import com.application.elerna.model.*;
 import com.application.elerna.repository.CourseRepository;
 import com.application.elerna.repository.TransactionRepository;
@@ -49,28 +51,26 @@ public class PaymentServiceImpl implements PaymentService {
     public String pay(PaymentRequest request) {
 
         // check user's bank account
+        log.info("Pay for course. Start account deducting");
 
         boolean isSuccessfully = bankAccountService.pay(request);
 
         // suppose that it successfully
 
         if (!isSuccessfully) {
-            throw new InvalidRequestData("Cant pay for this course");
+            throw new InvalidAccountRemaining("Cant pay for this course");
         }
+
+        log.info("Deducting successfully, ready for creating new transaction");
 
         var course = courseRepository.findById(request.getCourseId());
-
-        if (course.isEmpty() || !course.get().isStatus()) {
-
-            throw new ResourceNotFound("Course is not ready, id = " + request.getCourseId());
-
-        }
 
         Course currentCourse = course.get();
 
         User user = userService.getUserFromAuthentication();
 
         // create transaction
+        log.info("Creating new transaction");
         Transaction transaction = Transaction.builder()
                 .course(currentCourse)
                 .user(user)
@@ -81,6 +81,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .cardNumber(user.getCardNumber())
                 .build();
 
+        log.info("Save transaction");
         transactionRepository.save(transaction);
 
         currentCourse.addTransaction(transaction);
@@ -95,9 +96,11 @@ public class PaymentServiceImpl implements PaymentService {
 
         Long lastId = transactions.get(transactions.size() - 1).getId();
 
+        log.info("Create transaction's privileges");
         Privilege priView = privilegeService.createPrivilege("transaction", lastId, "view", "View transaction " + lastId);
         Privilege priDelete = privilegeService.createPrivilege("transaction", lastId, "delete", "Delete transaction " + lastId);
 
+        log.info("Create transaction's roles");
         Role roleAdmin = roleService.createRole("admin", "transaction", lastId);
 
         priView.addRole(roleAdmin);
@@ -109,6 +112,7 @@ public class PaymentServiceImpl implements PaymentService {
         privilegeService.savePrivilege(priDelete);
         privilegeService.savePrivilege(priView);
 
+        log.info("Add role to user");
         roleService.saveRole(roleAdmin);
 
         user.addRole(roleAdmin);
@@ -130,6 +134,8 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<?> getAllTransaction(Integer pageNo, Integer pageSize) {
+
+        log.info("Get all transaction, pageNo: {}, pageSize: {}", pageNo, pageSize);
 
         Pageable pageable = PageRequest.of(pageNo, pageSize);
 
@@ -158,8 +164,10 @@ public class PaymentServiceImpl implements PaymentService {
         var transaction = transactionRepository.findById(transactionId);
 
         if (transaction.isEmpty()) {
-            throw new ResourceNotFound("Transaction is not existed");
+            throw new ResourceNotFound("Transaction", "transactionId: " + transactionId);
         }
+
+        log.info("Found transaction, id: {}", transactionId);
 
         return createTransactionResponse(transaction.get());
     }
@@ -177,6 +185,8 @@ public class PaymentServiceImpl implements PaymentService {
     public PageResponse<?> getTransactionHistory(Integer pageNo, Integer pageSize) {
 
         User user = userService.getUserFromAuthentication();
+
+        log.info("Get transaction history, userId: {}, pageNo: {}, pageSize: {}", user.getId(), pageNo, pageSize);
 
         Set<Transaction> transactions = user.getTransactions();
         List<Transaction> transactionList = transactions.stream().toList();

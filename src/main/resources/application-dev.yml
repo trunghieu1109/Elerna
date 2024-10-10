@@ -22,7 +22,7 @@ logging:
   level:
     root: INFO
   file:
-    name: log/dev-logs/app-log-%d{yyyy-MM-dd}.log
+    name: "logs/app-log-${spring.application.name}-%d{yyyy-MM-dd_HH-mm-ss}.log"
 
 
 #springdoc:

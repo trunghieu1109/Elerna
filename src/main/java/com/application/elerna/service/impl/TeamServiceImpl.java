@@ -4,7 +4,9 @@ import com.application.elerna.dto.request.TeamRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.TeamResponse;
 import com.application.elerna.exception.InvalidRequestData;
+import com.application.elerna.exception.ResourceAlreadyExistedException;
 import com.application.elerna.exception.ResourceNotFound;
+import com.application.elerna.exception.ResourceNotReady;
 import com.application.elerna.model.Privilege;
 import com.application.elerna.model.Role;
 import com.application.elerna.model.Team;
@@ -14,19 +16,16 @@ import com.application.elerna.service.RoleService;
 import com.application.elerna.service.TeamService;
 import com.application.elerna.service.PrivilegeService;
 import com.application.elerna.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -59,9 +58,11 @@ public class TeamServiceImpl implements TeamService {
         Optional<Team> foundTeam = teamRepository.findByName(teamName);
 
         if (foundTeam.isPresent()) {
-            log.error("Team name has been existed in database");
-            throw new InvalidRequestData("Team name has been existed in database. Please try other team names");
+
+            throw new ResourceAlreadyExistedException("Team", foundTeam.get().getId());
         }
+
+        log.info("Team {} not found, ready for creating new team", teamRequest.getName());
 
         // create new team
         Team team = Team.builder()
@@ -75,6 +76,7 @@ public class TeamServiceImpl implements TeamService {
         // get requesting user
         User user = userService.getUserFromAuthentication();
 
+        log.info("Save team, team name: {}", team.getName());
         saveTeam(team, user);
 
         return createTeamResponse(team);
@@ -94,12 +96,14 @@ public class TeamServiceImpl implements TeamService {
         Optional<Team> team = teamRepository.findById(teamId);
 
         if (team.isEmpty()) {
-            throw new ResourceNotFound("Team not found");
+            throw new ResourceNotFound("Team", "teamId: " + teamId);
         }
 
         if (!team.get().isActive()) {
-            throw new InvalidRequestData("Team is inactive");
+            throw new ResourceNotReady("Team", teamId);
         }
+
+        log.info("{} is ready. Return team's detail", team.get().getName());
 
         return createTeamResponse(team.get());
     }
@@ -118,12 +122,14 @@ public class TeamServiceImpl implements TeamService {
         var team = teamRepository.findById(teamId);
 
         if (team.isEmpty()) {
-            throw new ResourceNotFound("Team not found");
+            throw new ResourceNotFound("Team", "teamId: " + teamId);
         }
 
         if (!team.get().isActive()) {
-            throw new InvalidRequestData("Team is inactive");
+            throw new ResourceNotReady("Team", teamId);
         }
+
+        log.info("{} is ready. Delete team", team.get().getName());
 
         // delete team by setting active = false
         team.get().setActive(false);
@@ -146,6 +152,9 @@ public class TeamServiceImpl implements TeamService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<?> getAllTeam(Integer pageNo, Integer pageSize, String searchBy) {
+
+        log.info("Get all teams with search criteria: {}, pageNo: {}, pageSize: {}", searchBy, pageNo, pageSize);
+
         Page<Team> teams = utilsRepository.findTeamByName(pageNo, pageSize, searchBy);
 
         return PageResponse.builder()
@@ -174,6 +183,8 @@ public class TeamServiceImpl implements TeamService {
         User user = userService.getUserFromAuthentication();
         System.out.println(user.getId());
 
+        log.info("Get {}'s joined teams with search criteria: {}, pageNo: {}, pageSize: {}", user.getUsername(), searchBy, pageNo, pageSize);
+
         // get user's joined teams
         List<Team> teams = new ArrayList<>();
 
@@ -184,6 +195,8 @@ public class TeamServiceImpl implements TeamService {
         }
 
         int size_ = teams.size();
+
+        log.info("Paging for joined teams list");
 
         Page<Team> page = new PageImpl<>(teams.subList(Math.min(pageNo * pageSize, teams.size()), Math.min((pageNo + 1) * pageSize, teams.size())),
                 PageRequest.of(pageNo, pageSize),
@@ -213,10 +226,17 @@ public class TeamServiceImpl implements TeamService {
         // find team
         var team = teamRepository.findById(teamId);
 
-        if (team.isEmpty() || !team.get().isActive()) {
-            throw new InvalidRequestData("Team is not ready (inactive or not existed)");
+        if (team.isEmpty()) {
+            throw new ResourceNotFound("Team", "teamId: " + teamId);
         }
 
+        if (!team.get().isActive()) {
+            throw new ResourceNotReady("Team", teamId);
+        }
+
+        log.info("Found team, teamId: {}", teamId);
+
+        log.info("User {} join team {}", user.getId(), teamId);
         Team team_ = team.get();
 
         // user joins team
@@ -227,6 +247,7 @@ public class TeamServiceImpl implements TeamService {
         teamRepository.save(team_);
         userRepository.save(user);
 
+        log.info("Add team's role to user");
         Role roleViewer = roleService.getRoleByName("VIEWER_TEAM_" + team_.getId());
 
         user.addRole(roleViewer);
@@ -254,23 +275,32 @@ public class TeamServiceImpl implements TeamService {
         // find team
         var currentTeam = teamRepository.findById(teamId);
 
-        if (currentTeam.isEmpty() || !currentTeam.get().isActive()) {
-            throw new InvalidRequestData("TeamId is invalid, not existed or inactive " + teamId);
+        if (currentTeam.isEmpty()) {
+            throw new ResourceNotFound("Team", "teamId: " + teamId);
         }
+
+        if (!currentTeam.get().isActive()) {
+            throw new ResourceNotReady("Team", teamId);
+        }
+
+        log.info("Found team, ready for user {} out team {}", user.getId(), teamId);
+
+        log.info("Remove user from team and vice versa");
 
         Team team = currentTeam.get();
 
         // remove user from team
         if (!user.getTeams().contains(team)) {
-            throw new ResourceNotFound("User not in teams");
+            throw new NoSuchElementException("User not in team");
         }
 
         if (!team.getUsers().contains(user)) {
-            throw new ResourceNotFound("Teams does not contain user");
+            throw new NoSuchElementException("Team does not contain user");
         }
 
         userRepository.removeUserTeam(user.getId(), teamId);
 
+        log.info("Remove user's team roles");
         // remove user's roles
         Set<Role> roles = user.getRoles();
 
@@ -297,11 +327,19 @@ public class TeamServiceImpl implements TeamService {
     @Transactional(readOnly = true)
     public PageResponse<?> getMemberList(Long teamId, Integer pageNo, Integer pageSize) {
 
+        log.info("Get member list of team {}, pageNo: {}, pageSize: {}", teamId, pageNo, pageSize);
+
         var team = teamRepository.findById(teamId);
 
-        if (team.isEmpty() || !team.get().isActive()) {
-            throw new ResourceNotFound("Team not ready, id = " + team.get().getId());
+        if (team.isEmpty()) {
+            throw new ResourceNotFound("Team", "teamId = " + team.get().getId());
         }
+
+        if (!team.get().isActive()) {
+            throw new ResourceNotReady("Team", teamId);
+        }
+
+        log.info("Found team {}, ready to get member list", teamId);
 
         List<User> users = team.get().getUsers().stream().toList();
 
@@ -334,14 +372,16 @@ public class TeamServiceImpl implements TeamService {
         var currentTeam = teamRepository.findByName(team.getName());
 
         if (currentTeam.isEmpty()) {
-            throw new ResourceNotFound("Team not found");
+            throw new ResourceNotFound("Team", "teamId: " + team.getId());
         }
 
         // create roles and privileges relating to team
+        log.info("Create team privileges");
         Privilege priView = privilegeService.createPrivilege("team", currentTeam.get().getId(), "view", "View team, id = " + currentTeam.get().getId());
         Privilege priUpdate = privilegeService.createPrivilege("team", currentTeam.get().getId(), "update", "Update team, id = " + currentTeam.get().getId());
         Privilege priDelete = privilegeService.createPrivilege("team", currentTeam.get().getId(), "delete", "Delete team, id = " + currentTeam.get().getId());
 
+        log.info("Create team role");
         Role roleAdmin = roleService.createRole("ADMIN", "team", currentTeam.get().getId());
         Role roleViewer = roleService.createRole("VIEWER", "team", currentTeam.get().getId());
         Role roleEditor = roleService.createRole("EDITOR", "team", currentTeam.get().getId());
@@ -362,6 +402,7 @@ public class TeamServiceImpl implements TeamService {
         priUpdate.addRole(roleAdmin);
         priUpdate.addRole(roleEditor);
 
+        log.info("Add role to user");
         user.addRole(roleAdmin);
         roleAdmin.addUser(user);
 

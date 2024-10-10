@@ -3,8 +3,7 @@ package com.application.elerna.service.impl;
 import com.application.elerna.dto.request.PaymentRequest;
 import com.application.elerna.dto.response.BankAccountLogResponse;
 import com.application.elerna.dto.response.PageResponse;
-import com.application.elerna.exception.InvalidRequestData;
-import com.application.elerna.exception.ResourceAlreadyExistedException;
+import com.application.elerna.exception.InvalidAccountRemaining;
 import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.BankAccount;
 import com.application.elerna.model.BankAccountLog;
@@ -90,20 +89,23 @@ public class BankAccountServiceImpl implements BankAccountService {
         var course = courseRepository.findById(request.getCourseId());
 
         if (course.isEmpty()) {
-            throw new ResourceNotFound("Course not found, id: " + request.getCourseId());
+            throw new ResourceNotFound("Course",  "courseId: " + request.getCourseId());
         }
+
+        log.info("Course found, ready to pay for course");
 
         Course currentCourse = course.get();
 
         // check if account has enough money
         if (!checkRemainingAmount(currentCourse.getPrice(), user)) {
 
-            throw new InvalidRequestData("Remaining account was enough to pay for this course, amount: " + user.getBankAccount().getAmount() + " but price is " + course.get().getPrice());
+            throw new InvalidAccountRemaining("amount: " + user.getBankAccount().getAmount() + " but price is " + course.get().getPrice());
         }
 
         // implement payment
         BankAccount bankAccount = user.getBankAccount();
 
+        log.info("Deducting money from account to pay for course, amount: {}, price: {}", bankAccount.getAmount(), currentCourse.getPrice(), bankAccount.getAmount() - currentCourse.getPrice());
         bankAccount.setAmount(bankAccount.getAmount() - currentCourse.getPrice());
 
         if (bankAccount.getAmount() < BankAccount.MAINTAINING_AMOUNT) {
@@ -112,12 +114,16 @@ public class BankAccountServiceImpl implements BankAccountService {
 
             bankAccountRepository.save(bankAccount);
 
+            log.info("Create new bank account logs");
+
             BankAccountLog bankAccountLog = BankAccountLog.builder()
                     .bankAccount(bankAccount)
                     .message("Account " + bankAccount.getId() + " pays for course " + request.getCourseId() + " successfully, amount = "
                             + course.get().getPrice() + ", residual = " + bankAccount.getAmount())
                     .messageType("Payment")
                     .build();
+
+            log.info("Log message: {}", bankAccountLog.getMessage());
 
             bankAccountLogRepository.save(bankAccountLog);
 
@@ -140,18 +146,14 @@ public class BankAccountServiceImpl implements BankAccountService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<?> getBankAccountLogs(Integer pageNo, Integer pageSize) {
+
+        log.info("Get bank account logs: pageNo: {}, pageSize: {}", pageNo, pageSize);
+
         User user = userService.getUserFromAuthentication();
 
         BankAccount bankAccount = user.getBankAccount();
 
         List<BankAccountLog> logs = bankAccount.getBankAccountLogs().stream().toList();
-
-//        logs.sort(new Comparator<BankAccountLog>() {
-//            @Override
-//            public int compare(BankAccountLog o1, BankAccountLog o2) {
-//                return o1.getId().compareTo(o2.getId());
-//            }
-//        });
 
         int totalPages = (int) Math.ceil(logs.size() * 1.0 / pageSize);
 
@@ -181,18 +183,24 @@ public class BankAccountServiceImpl implements BankAccountService {
         BankAccount bankAccount = user.getBankAccount();
 
         if (bankAccount == null) {
-            throw new InvalidRequestData("User is not matched with any bank accounts");
+            throw new ResourceNotFound("BankAccount", "cardNumber: " + user.getCardNumber());
         }
+        log.info("Deposit {}$ for user {} with cardNumber: {}", amount, user.getUsername(), bankAccount.getCardNumber());
+
 
         bankAccount.setAmount(bankAccount.getAmount() + amount);
 
         bankAccountRepository.save(bankAccount);
+
+        log.info("Create new bank logs for depositing");
 
         BankAccountLog bankAccountLog = BankAccountLog.builder()
                 .bankAccount(bankAccount)
                 .messageType("Deposit")
                 .message("Deposit money to bank account " + bankAccount.getId() + ", amount = " + amount + ", residual = " + bankAccount.getAmount())
                 .build();
+
+        log.info("Log message: {}", bankAccountLog.getMessage());
 
         bankAccountLogRepository.save(bankAccountLog);
         bankAccount.addBankAccountLog(bankAccountLog);
