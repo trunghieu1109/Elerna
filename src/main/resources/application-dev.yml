@@ -15,6 +15,15 @@ spring:
       hibernate:
         ddl-auto: none
 
+# logging
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %clr(%5p) [%thread] %logger{12} - %clr(%msg%n){blue}"
+  level:
+    root: INFO
+  file:
+    name: log/dev-logs/app-log-%d{yyyy-MM-dd}.log
+
 
 #springdoc:
 #  api-docs:

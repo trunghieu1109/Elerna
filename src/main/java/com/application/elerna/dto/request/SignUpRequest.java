@@ -2,11 +2,10 @@ package com.application.elerna.dto.request;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Getter;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -14,6 +13,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 @Getter
+@Builder
 public class SignUpRequest implements Serializable {
 
     @NotBlank(message = "Username must not blank")
@@ -33,7 +33,7 @@ public class SignUpRequest implements Serializable {
 
     @NotNull(message = "Date of birth must not null")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    @JsonFormat(pattern = "MM/dd/yyyy")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date dateOfBirth;
 
     @Email

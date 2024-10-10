@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
 @Configuration
 @EnableAsync
 public class AsyncConfig {
-    @Bean
+    @Bean("threading-bean")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);

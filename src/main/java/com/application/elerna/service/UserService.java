@@ -48,4 +48,6 @@ public interface UserService {
 
     List<String> getUserRole(Long userId);
 
+    Long isExistedByUsername(Long username);
+
 }

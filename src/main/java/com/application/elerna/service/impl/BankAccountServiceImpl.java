@@ -4,6 +4,7 @@ import com.application.elerna.dto.request.PaymentRequest;
 import com.application.elerna.dto.response.BankAccountLogResponse;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.exception.InvalidRequestData;
+import com.application.elerna.exception.ResourceAlreadyExistedException;
 import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.BankAccount;
 import com.application.elerna.model.BankAccountLog;
@@ -227,5 +228,13 @@ public class BankAccountServiceImpl implements BankAccountService {
     @Override
     public void saveBankAccount(BankAccount account) {
         bankAccountRepository.save(account);
+    }
+
+    @Override
+    public BankAccount getByCardnumber(String cardNumber) {
+        var bankAccount = bankAccountRepository.findByCardNumber(cardNumber);
+
+        return bankAccount.orElse(null);
+
     }
 }

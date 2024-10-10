@@ -19,4 +19,6 @@ public interface BankAccountService {
     String deposit(Double amount);
 
     void saveBankAccount(BankAccount account);
+
+    BankAccount getByCardnumber(String cardNumber);
 }

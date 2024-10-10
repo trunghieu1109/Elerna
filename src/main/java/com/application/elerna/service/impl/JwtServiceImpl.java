@@ -3,9 +3,7 @@ package com.application.elerna.service.impl;
 import com.application.elerna.model.User;
 import com.application.elerna.service.JwtService;
 import com.application.elerna.utils.TokenEnum;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -188,6 +186,14 @@ public class JwtServiceImpl implements JwtService {
             }
         }
 
+        if (!username.equals(user.getUsername())) {
+            throw new MalformedJwtException("Token not match to " + user.getUsername());
+        }
+
+        if (isExpired(token, type)) {
+            throw new ExpiredJwtException(extractAllHeader(token, type), extractAllClaims(token, type), type.toString() + " has been expired");
+        }
+
         return username.equals(user.getUsername()) && !isExpired(token, type);
     }
 
@@ -241,6 +247,10 @@ public class JwtServiceImpl implements JwtService {
      */
     private Claims extractAllClaims(String token, TokenEnum type) {
         return Jwts.parserBuilder().setSigningKey(getKey(type)).build().parseClaimsJws(token).getBody();
+    }
+
+    private JwsHeader extractAllHeader(String token, TokenEnum type) {
+        return Jwts.parserBuilder().setSigningKey(getKey(type)).build().parseClaimsJws(token).getHeader();
     }
 
 }

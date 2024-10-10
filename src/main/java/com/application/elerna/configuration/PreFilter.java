@@ -36,7 +36,7 @@ public class PreFilter extends OncePerRequestFilter {
     private final TokenService tokenService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         // extract token from header
         String token = request.getHeader("Authorization");

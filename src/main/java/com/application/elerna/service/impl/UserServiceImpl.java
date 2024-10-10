@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,7 +53,7 @@ public class UserServiceImpl implements UserService {
      */
     public UserDetailsService userDetailsService() {
         return username ->
-           userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFound("Can't get user by username: " + username));
+           userRepository.findByUsername(username).orElseThrow(() -> new AuthenticationCredentialsNotFoundException("Can't get user by username: " + username));
     }
 
     /**
@@ -388,6 +389,11 @@ public class UserServiceImpl implements UserService {
         }
 
         return roles.stream().map(role -> role.getName()).toList();
+    }
+
+    @Override
+    public Long isExistedByUsername(Long username) {
+        return null;
     }
 
 

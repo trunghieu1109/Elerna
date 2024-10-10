@@ -4,22 +4,20 @@ import com.application.elerna.dto.request.ResetPasswordRequest;
 import com.application.elerna.dto.request.SignInRequest;
 import com.application.elerna.dto.request.SignUpRequest;
 import com.application.elerna.dto.response.TokenResponse;
-import com.application.elerna.exception.InvalidRequestData;
-import com.application.elerna.exception.ResourceNotFound;
+import com.application.elerna.exception.*;
 import com.application.elerna.model.BankAccount;
 import com.application.elerna.model.Role;
 import com.application.elerna.model.Token;
 import com.application.elerna.model.User;
-import com.application.elerna.repository.BankAccountRepository;
 import com.application.elerna.service.*;
 import com.application.elerna.utils.TokenEnum;
+import io.jsonwebtoken.MalformedJwtException;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +39,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final TokenService tokenService;
     private final MailService mailService;
     private final RoleService roleService;
-    private final BankAccountRepository bankAccountRepository;
+
     private final BankAccountService bankAccountService;
 
     @Value("${jwt.expirationHour}")
@@ -67,17 +65,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // check is existed username
         Optional<User> currentUser = userService.getByUserName(username);
         if (currentUser.isPresent()) {
-            log.error("Username had been existed in database");
-            throw new InvalidRequestData("Username had been existed in database");
+            throw new ResourceAlreadyExistedException("User", currentUser.get().getId());
         }
 
-        var bankAccount = bankAccountRepository.findByCardNumber(request.getCardNumber());
+        log.info("Username {} not existed, ready for creating new user", username);
 
-        if (bankAccount.isPresent()) {
-            throw new InvalidRequestData("Bank Account was matched with other user");
+        BankAccount bankAccount = bankAccountService.getByCardnumber(request.getCardNumber());
+
+        if (bankAccount != null) {
+            throw new ResourceAlreadyExistedException("Bank Account", bankAccount.getId());
         }
+
+        log.info("Card number {} not existed, ready for creating new bank account", request.getCardNumber());
 
         // create new user
+
+        log.info("Creating new user");
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -100,19 +103,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .tokens(new HashSet<>())
                 .build();
 
+
+        log.info("Save user and bank account");
         userService.saveUser(user);
 
         BankAccount bankAccount1 = bankAccountService.createBankAccount(user);
-        bankAccountRepository.save(bankAccount1);
+        bankAccountService.saveBankAccount(bankAccount1);
 
         user.setBankAccount(bankAccount1);
         userService.saveUser(user);
 
         // create new token
-        log.info("Get access token");
+        log.info("Create access token");
         String accessToken = jwtService.generateAccessToken(username);
 
-        log.info("Get refresh token");
+        log.info("Create refresh token");
         String refreshToken = jwtService.generateRefreshToken(username);
 
         String deviceId = UUID.randomUUID().toString();
@@ -127,24 +132,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .refExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationDay))
                 .build();
 
-        log.info("User add token");
+        log.info("User {} add token", user.getUsername());
         user.addToken(token);
         token.setUser(user);
 
-        log.info("Add global role to user");
+        log.info("Add global role to user {}", user.getUsername());
         addGlobalRole(user);
 
         if (request.getSystemRole().equals("user")) {
-            log.info("Add profile management role");
+            log.info("User {} add profile management role", user.getUsername());
             userService.addProfileRole(user);
         } else {
             if (request.getSystemRole().equals("admin")) {
-                log.info("Add system admin role");
+                log.info("User {} add system admin role", user.getUsername());
                 userService.addSystemAdminRole(user);
             }
         }
 
-        log.info("Save user");
+        log.info("Save user {}", user.getUsername());
         userService.saveUser(user);
 
         return TokenResponse.builder()
@@ -173,26 +178,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String uuid = request.getUuid();
 
         // authenticate by authentication manager
-        log.info("Authenticate user with username and password");
+        log.info("Authenticate username: {} and password: {}", username, password);
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
 
         // Get user entity
-        var user = userService.getByUserName(username).orElseThrow(() -> new ResourceNotFound("Can't get user with username"));
+        var user = userService.getByUserName(username).orElseThrow(() -> new AuthenticationCredentialsNotFoundException("User with " + username + " haven't existed"));
 
         // check user is active
         if (!user.isActive()) {
-            log.error("User is in active");
-            throw new InvalidRequestData("User is inactive");
+            log.error("User {} is inactive", username);
+            throw new DisabledException("User " + username + " is inactive");
         }
 
+        log.info("User {} is activated, ready for login", username);
 
         // Generate new access token and refresh token
+        log.info("Generating access and refresh token");
         String accessToken = jwtService.generateAccessToken(username);
         String refreshToken = jwtService.generateRefreshToken(username);
 
         Token token = tokenService.getByUuid(uuid);
 
         if (token == null) {
+            log.info("User {} are using new device. Create new uuid to login", user.getUsername());
             token = Token.builder()
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
@@ -207,6 +215,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             tokenService.saveToken(token);
         } else {
             log.info("Token uuid: {}", token.getUuid());
+
+            if (!request.getUsername().equals(jwtService.extractUsername(token.getAccessToken(), TokenEnum.ACCESS_TOKEN))) {
+
+                throw new BadCredentialsException("Device-Id " + uuid + " not matched to requested user");
+
+            }
 
             token.setAccessToken(accessToken);
             token.setAccExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationHour));
@@ -243,37 +257,43 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String refreshToken = request.getHeader("Refresh-Token");
 
         if (refreshToken == null || refreshToken.isEmpty()) {
-            throw new InvalidRequestData("Refresh: Refresh Token is invalid");
+            throw new MalformedJwtException("Refresh Token is empty, refreshToken: " + refreshToken);
         }
 
         String accessToken = request.getHeader("Access-Token");
 
         if (accessToken == null || accessToken.isEmpty()) {
-            throw new InvalidRequestData("Refresh: Access Token is invalid");
+            throw new MalformedJwtException("Access Token is empty, accessToken: " + accessToken);
         }
+
+        log.info("Received token: AccessToken: {}, RefreshToken: {}", accessToken, refreshToken);
 
         // extract username
         String username = jwtService.extractUsername(refreshToken, TokenEnum.REFRESH_TOKEN);
         if (username == null || username.isEmpty()) {
-            throw new InvalidRequestData("Refresh: Refresh Token not mapped to any user");
+            throw new MalformedJwtException("Refresh token is not matched to any user, refreshToken: " + refreshToken);
         }
 
         String usernameAccess = jwtService.extractUsername(accessToken, TokenEnum.ACCESS_TOKEN);
         if (usernameAccess == null || usernameAccess.isEmpty()) {
-            throw new InvalidRequestData("Refresh: Access Token not mapped to any user");
+            throw new MalformedJwtException("Access token is not matched to any user, accessToken: " + accessToken);
         }
 
         if (!username.equals(usernameAccess)) {
-            throw new InvalidRequestData("Access token and refresh token are not matched to the same user");
+            throw new TokenMismatchException("AccessToken mismatched to RefreshToken", usernameAccess, username);
         }
 
+        log.info("Access's User is matched to Refresh's User, namely {}", username);
+
         // get user details
-        var userDetails = userService.getByUserName(username).orElseThrow(() -> new ResourceNotFound("Can't find user with username: " + username));
+        var userDetails = userService.getByUserName(username).orElseThrow(() -> new AuthenticationCredentialsNotFoundException("Can't find user with username: " + username));
 
         // validate token
         if (!jwtService.isValid(refreshToken, TokenEnum.REFRESH_TOKEN, userDetails)) {
             throw new InvalidRequestData("Refresh: Username is not matched or token was expired");
         }
+
+        log.info("Refresh token is valid");
 
         String deviceId = request.getHeader("Device-Id");
 
@@ -282,8 +302,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Token currentToken = tokenService.getByUuid(deviceId);
 
         if (currentToken == null) {
-            throw new ResourceNotFound("Can't get token by id");
+
+            throw new BadCredentialsException("Not existed suitable access token of " + username + "  for device-id: " + deviceId);
+
         }
+
+        log.info("Found token with device-id: {}", deviceId);
+
+        log.info("Save token to database");
 
         currentToken.setAccessToken(newAccessToken);
         currentToken.setAccExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expirationHour));
@@ -311,10 +337,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // extract token from header
         String accessToken = request.getHeader("Authorization");
 
-        log.info("Log out: Access Token: {}", accessToken);
+        log.info("Access Token: {}", accessToken);
 
-        if (accessToken == null || !accessToken.startsWith("Bearer ")) {
-            throw new InvalidRequestData("Logout: Access Token is invalid");
+        if (accessToken == null || accessToken.isEmpty() || !accessToken.startsWith("Bearer ")) {
+            throw new MalformedJwtException("Access Token is empty, accessToken: " + accessToken);
         }
 
         accessToken = accessToken.substring("Bearer ".length());
@@ -322,22 +348,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // extract username and verify token
         String username = jwtService.extractUsername(accessToken, TokenEnum.ACCESS_TOKEN);
         if (username == null || username.isEmpty()) {
-            throw new InvalidRequestData("Logout: Username is invalid");
+            throw new MalformedJwtException("Access token is not matched to any user, accessToken: " + accessToken);
         }
+
+        log.info("Access token is matched to {}", username);
 
         Optional<User> user = userService.getByUserName(username);
 
         if (user.isEmpty()) {
-            throw new ResourceNotFound("User not found, username: " + username);
+            throw new AuthenticationCredentialsNotFoundException("Can't find user with username: " + username);
         }
 
         if (!jwtService.isValid(accessToken, TokenEnum.ACCESS_TOKEN, user.get())) {
-            throw new InvalidRequestData("Logout: Username is not matched or Token is expired");
+            throw new InvalidRequestData("Username is not matched or token was expired");
         }
 
-        // delete token
-        Token currentToken = tokenService.getByUuid(request.getHeader("Device-Id"));
+        log.info("Access token is valid");
 
+        String deviceId = request.getHeader("Device-Id");
+
+        // delete token
+        Token currentToken = tokenService.getByUuid(deviceId);
+
+        if (currentToken == null) {
+
+            throw new BadCredentialsException("Not existed suitable access token of " + username + "  for device-id: " + deviceId);
+        }
+
+        log.info("Delete token");
         tokenService.deleteToken(currentToken);
 
     }
@@ -354,17 +392,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public String forgotPassword(String email) throws MessagingException, UnsupportedEncodingException {
 
         // extract email
-        var user = userService.getByEmail(email).orElseThrow(() -> new ResourceNotFound("Cant get user by email: " + email));
+        var user = userService.getByEmail(email).orElseThrow(() -> new ResourceNotFound("User", "Email: " + email));
 
         if (!user.isActive()) {
-            log.error("User is inactive");
-            throw new InvalidRequestData("Email is matched with inactive user");
+            throw new DisabledException("User " + user.getUsername() + " is inactive");
         }
+
+        log.info("Token is activated, matched with {}", user.getUsername());
+
+        log.info("Generating reset token");
 
         // generate reset token
         String resetToken = jwtService.generateResetToken(user.getUsername());
 
         // send email
+        log.info("Send confirmation email to {}", email);
         String url = String.format("curl -X 'POST' 'http://localhost/api/v1/auth/confirm-reset' -H 'accept: */*' -H 'Content-Type: application/json' -d '\"%s\"'", resetToken);
 
         mailService.sendEmail("hieukunno1109@gmail.com", "Confirm Reset Password", url, null);
@@ -388,16 +430,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 //        log.info(resetToken);
 
         if (resetToken == null || resetToken.isEmpty()) {
-            throw new InvalidRequestData("Reset Token is invalid");
+            throw new MalformedJwtException("Reset Token is invalid");
         }
+
+        log.info("Get reset token, token: " + resetToken);
 
         // extract username from token
         String username = jwtService.extractUsername(resetToken, TokenEnum.RESET_TOKEN);
 
         // check whether username existed or not
-        var user = userService.getByUserName(username).orElseThrow(() -> new ResourceNotFound("Cant get user by username: " + username));
+        var user = userService.getByUserName(username).orElseThrow(() -> new AuthenticationCredentialsNotFoundException("Cant get user by username: " + username));
         if (!username.equals(user.getUsername())) {
-            throw new InvalidRequestData("Reset token is not matched with user");
+            throw new MalformedJwtException("Reset token is not matched to any user, resetToken: " + resetToken);
         }
 
         return "Accepted to reset password";
@@ -420,15 +464,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String resetToken = request.getResetToken();
 
         if (resetToken == null || resetToken.isEmpty()) {
-            throw new InvalidRequestData("Reset Token is invalid");
+            throw new MalformedJwtException("Reset Token is invalid");
         }
 
         // extract username
         String username = jwtService.extractUsername(resetToken, TokenEnum.RESET_TOKEN);
 
-        var user = userService.getByUserName(username).orElseThrow(() -> new ResourceNotFound("Cant get user by username: " + username));
+        var user = userService.getByUserName(username).orElseThrow(() -> new AuthenticationCredentialsNotFoundException("Cant get user by username: " + username));
         if (!username.equals(user.getUsername())) {
-            throw new InvalidRequestData("Reset token is not matched with user");
+            throw new MalformedJwtException("Reset token is not matched to any user, resetToken: " + resetToken);
         }
 
         // compare password and confirmation
@@ -436,7 +480,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String confirmPassword  = request.getConfirmPassword();
 
         if (!password.equals(confirmPassword)) {
-            throw new InvalidRequestData("Password is not matched with confirm password");
+            throw new MalformedJwtException("Reset token is not matched to any user, resetToken: " + resetToken);
         }
 
         // change password
