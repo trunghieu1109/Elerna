@@ -3,6 +3,7 @@ package com.application.elerna.service.impl;
 import com.application.elerna.dto.request.UserDetailRequest;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.UserDetail;
+import com.application.elerna.exception.InvalidPrincipalException;
 import com.application.elerna.exception.InvalidRequestData;
 import com.application.elerna.exception.ResourceNotFound;
 import com.application.elerna.model.*;
@@ -19,7 +20,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -67,11 +70,15 @@ public class UserServiceImpl implements UserService {
      */
     @Transactional(readOnly = true)
     public PageResponse<?> getAllUsersBySort(Integer pageNo, Integer pageSize, String... sortBy) {
+
+        log.info("Get all user by sort order, pageNo: {}, pageSize: {}", pageNo, pageSize);
+
         // extract sorting criteria and map to sort orders
         String strPattern = "(\\w+?)(:)(.*)";
 
         List<Sort.Order> orders = new ArrayList<>();
 
+        log.info("Extract sort order");
         if (sortBy != null) {
             for (String sortOrder : sortBy) {
                 Pattern pattern = Pattern.compile(strPattern);
@@ -81,13 +88,15 @@ public class UserServiceImpl implements UserService {
                 if (matcher.find()) {
                     switch (matcher.group(3)) {
                         case "asc":
+                            log.info("Sort {} asc", matcher.group(1));
                             orders.add(new Sort.Order(Sort.Direction.ASC, matcher.group(1)));
                             break;
                         case "desc":
+                            log.info("Sort {} desc", matcher.group(1));
                             orders.add(new Sort.Order(Sort.Direction.DESC, matcher.group(1)));
                             break;
                         default:
-                            log.error("Sort order is invalid");
+                            log.warn("Sort order is invalid, namely: {}", sortBy);
                     }
                 }
             }
@@ -120,6 +129,8 @@ public class UserServiceImpl implements UserService {
      */
     @Transactional(readOnly = true)
     public PageResponse<?> getAllUsersBySearch(Integer pageNo, Integer pageSize, String... searchBy) {
+
+        log.info("Get all user by search order, pageNo: {}, pageSize: {}, searchBy: {}", pageNo, pageSize, searchBy);
 
         Page<User> users = utilsRepository.findUserBySearchCriteria(pageNo, pageSize, searchBy);
 
@@ -155,6 +166,9 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public void addProfileRole(User user) {
+
+        log.info("Add profile role to user");
+
         userRepository.save(user);
 
         var currentUser = getByUserName(user.getUsername());
@@ -164,11 +178,13 @@ public class UserServiceImpl implements UserService {
         }
 
         // create privileges
+        log.info("Create profile privileges");
         Privilege priView = privilegeService.createPrivilege("profile", currentUser.get().getId(), "view", "View profile, id = " + currentUser.get().getId());
         Privilege priUpdate = privilegeService.createPrivilege("profile", currentUser.get().getId(), "update", "Update profile, id = " + currentUser.get().getId());
         Privilege priDelete = privilegeService.createPrivilege("profile", currentUser.get().getId(), "delete", "Delete profile, id = " + currentUser.get().getId());
 
         // create roles
+        log.info("Create profile roles");
         Role roleAdmin = roleService.createRole("ADMIN", "profile", currentUser.get().getId());
 
         // add relationship between roles and privileges
@@ -180,6 +196,7 @@ public class UserServiceImpl implements UserService {
         priDelete.addRole(roleAdmin);
         priUpdate.addRole(roleAdmin);
 
+        log.info("Add role to user");
         user.addRole(roleAdmin);
         roleAdmin.addUser(user);
 
@@ -200,6 +217,8 @@ public class UserServiceImpl implements UserService {
      * @param user User
      */
     public void addSystemAdminRole(User user) {
+
+        log.info("Add SYSTEM_ADMIN role to user");
 
         userRepository.save(user);
 
@@ -246,7 +265,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserDetail getUserById(Long userId) {
-        var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFound("Cant get user by userId: " + userId));
+        var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFound("User", "userId: " + userId));
         return createUserDetail(user);
     }
 
@@ -259,9 +278,10 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserDetail updateUser(UserDetailRequest request) {
-        var user = userRepository.findById(request.getUserId()).orElseThrow(() -> new ResourceNotFound("Cant get user by userId: " + request.getUserId()));
+        var user = userRepository.findById(request.getUserId()).orElseThrow(() -> new ResourceNotFound("User", "userId: " + request.getUserId()));
 
         // update user with request details
+        log.info("Update user profile with request");
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setAddress(request.getAddress());
@@ -271,6 +291,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
 
         if (!user.getCardNumber().equals(user.getBankAccount().getCardNumber())) {
+            log.info("Create new bank account for user");
             BankAccount account = user.getBankAccount();
             account.setCardNumber(request.getCardNumber());
 
@@ -294,7 +315,9 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public String deleteUser(Long userId) {
-        var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFound("Cant find user with userId: " + userId));
+
+        log.info("Delete user, id: {}", userId);
+        var user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFound("User: ", "userId" + userId));
 
         user.setActive(false);
         user.setUsername(user.getUsername() + "-Deleted");
@@ -339,6 +362,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserFromAuthentication() {
 
+        log.info("Extract user details from authentication");
+
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = context.getAuthentication();
 
@@ -350,15 +375,15 @@ public class UserServiceImpl implements UserService {
 
             System.out.println(username);
 
-            User user = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFound("User not found"));
+            User user = userRepository.findByUsername(username).orElseThrow(() -> new AuthenticationCredentialsNotFoundException("User not found"));
 
             if (user.isActive()) {
                 return user;
             } else {
-                throw new InvalidRequestData("User is inactive");
+                throw new DisabledException("User is inactive");
             }
         } else {
-            throw new InvalidRequestData("Principal in token is not UserDetails");
+            throw new InvalidPrincipalException("Principal in token is not UserDetails");
         }
 
     }
@@ -374,14 +399,17 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public List<String> getUserRole(Long userId) {
 
+        log.info("Get user roles, id: {}", userId);
+
         var user = userRepository.findById(userId);
 
         if (user.isEmpty()) {
-            throw new ResourceNotFound("User not found, id = " + userId);
+            throw new ResourceNotFound("User", "userId = " + userId);
         }
 
         Set<Role> roles = user.get().getRoles();
 
+        log.info("Get joined teams's roles to apply to user");
         Set<Team> teams = user.get().getTeams();
 
         for (Team team : teams) {
@@ -395,6 +423,5 @@ public class UserServiceImpl implements UserService {
     public Long isExistedByUsername(Long username) {
         return null;
     }
-
 
 }

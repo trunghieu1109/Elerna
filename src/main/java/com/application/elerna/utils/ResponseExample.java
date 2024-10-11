@@ -851,4 +851,12 @@ public class ResponseExample {
               "data": null
             }
             """;
+
+    public static final String confirmSignUp = """
+            {
+                "status": 202,
+                "message": "Confirm successfully",
+                "data": ""
+            }
+            """;
 }

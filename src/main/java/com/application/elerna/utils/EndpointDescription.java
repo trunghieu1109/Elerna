@@ -69,4 +69,6 @@ public class EndpointDescription {
 
     public static final String rejectCreatingRequest = "Admin rejects creating course requests";
 
+    public static final String confirmSignup = "Admin confirm for signing up new account";
+
 }

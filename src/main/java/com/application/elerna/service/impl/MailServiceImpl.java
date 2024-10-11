@@ -1,21 +1,29 @@
 package com.application.elerna.service.impl;
 
+import com.application.elerna.service.JwtService;
 import com.application.elerna.service.MailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.sql.Template;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.templateresolver.StringTemplateResolver;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -23,7 +31,16 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class MailServiceImpl implements MailService {
 
-    private final JavaMailSender mailSender;
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @Autowired
+    private final TemplateEngine templateEngine;
+
+//    @Autowired
+//    public MailServiceImpl(@Qualifier("customTemplateEngine") TemplateEngine templateEngine) {
+//        this.templateEngine = templateEngine;
+//    }
 
     @Value("${spring.mail.from}")
     private String mailFrom;
@@ -81,6 +98,47 @@ public class MailServiceImpl implements MailService {
         mailSender.send(message);
 
 //        return "Send email successfully";
+    }
+
+    /**
+     *
+     * Send email to confirm signup
+     *
+     * @param email String
+     * @param id Long
+     * @param username String
+     * @param secretKey String
+     */
+    @Override
+    public void sendConfirmLink(String email, Long id, String username, String secretKey) throws MessagingException, UnsupportedEncodingException {
+        log.info("Send email to confirm account registration");
+
+        log.info("Create new message");
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, "UTF-8");
+
+        log.info("Create confirm link");
+        Context context = new Context();
+        String linkConfirm = String.format("http://localhost:80/api/v1/auth/confirm-signup/%s?secretCode=%s", id, secretKey).toString();
+
+        log.info("Link confirm: {}", linkConfirm);
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("linkConfirm", linkConfirm);
+        context.setVariables(properties);
+
+        log.info("Set email content");
+        helper.setFrom(mailFrom, "Hieu Nguyen");
+        helper.setTo("hieukunno1109@gmail.com");
+        helper.setSubject("Please confirm your account");
+
+        String html = templateEngine.process("confirmEmail.html", context);
+
+        helper.setText(html, true);
+
+        mailSender.send(message);
+
+        log.info("Send email successfully");
+
     }
 
 }

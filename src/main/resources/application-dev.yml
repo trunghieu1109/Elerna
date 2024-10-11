@@ -47,11 +47,13 @@ openapi:
     version: 1.0.0
 
 jwt:
+  expirationMinute: 5
   expirationHour: 1
   expirationDay: 14
   secretKey: f23f5983b54d69ff22c22661ff764de82beef64ec25137be5be1acbfb98bcf8a
   refreshKey: f526795c95399cea27c055c842c3d6ab018ed0fa4f66f701c28ab22dec28237b
   resetKey: 7c18b43a1d8227cddb332e67971e790ce35ac2303f4fccfb2a565622f2fe1cec
+  signupKey: 4b2f8536a58e20e9d5d1cec9caf2803be54b5c723b8d4625510d3c934f4fde54
 
 course:
   lessonFolder: ${LESSON_FOLDER:E:\Exercise\Elerna\src\main\resources\Lesson}

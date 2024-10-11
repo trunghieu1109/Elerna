@@ -5,6 +5,7 @@ import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.dto.response.UserDetail;
 import com.application.elerna.model.User;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Min;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -49,5 +50,4 @@ public interface UserService {
     List<String> getUserRole(Long userId);
 
     Long isExistedByUsername(Long username);
-
 }

@@ -82,6 +82,19 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+//    @ExceptionHandler(MessagingException.class)
+//    public ErrorResponse handleMessageException(Exception ex) {
+//        log.error("Message exception, detail: {}", ex.getMessage());
+//
+//        return ErrorResponse.builder()
+//                .timestamp(new Date(System.currentTimeMillis()))
+//                .status(HttpStatus.BAD_REQUEST.value())
+//                .cause(HttpStatus.BAD_REQUEST.getReasonPhrase())
+//                .message(ex.getMessage())
+//                .path("")
+//                .build();
+//    }
+
 
 
 }

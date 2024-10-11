@@ -6,7 +6,9 @@ import com.application.elerna.dto.response.CourseRequestResponse;
 import com.application.elerna.dto.response.CourseResponse;
 import com.application.elerna.dto.response.PageResponse;
 import com.application.elerna.exception.InvalidRequestData;
+import com.application.elerna.exception.ResourceAlreadyExistedException;
 import com.application.elerna.exception.ResourceNotFound;
+import com.application.elerna.exception.ResourceNotReady;
 import com.application.elerna.model.*;
 import com.application.elerna.repository.*;
 import com.application.elerna.service.CourseService;
@@ -90,6 +92,8 @@ public class CourseServiceImpl implements CourseService {
     @Transactional(readOnly = true)
     public PageResponse<?> getAllCourseRequest(Integer pageNo, Integer pageSize) {
 
+        log.info("Get all course requests, pageNo: {}, pageSize: {}", pageNo, pageSize);
+
         Pageable pageable = PageRequest.of(pageNo, pageSize);
 
         Page<CourseRequest> courseRequests = courseRequestRepository.findAll(pageable);
@@ -119,8 +123,7 @@ public class CourseServiceImpl implements CourseService {
         var courseRequest = courseRequestRepository.findById(requestId);
 
         if (courseRequest.isEmpty()) {
-            log.error("Cant not find course request with requestId {}", requestId);
-            throw new ResourceNotFound("Cant not find course request with requestId: " + requestId);
+            throw new ResourceNotFound("Course request", "requestId: " + requestId);
         }
 
         // check whether course name is existed
@@ -130,8 +133,10 @@ public class CourseServiceImpl implements CourseService {
 
         if (course.isPresent()) {
 //            rejectCourseRequest(requestId);
-            throw new InvalidRequestData("Course name is existed in database");
+            throw new ResourceAlreadyExistedException("Course", course.get().getId());
         }
+
+        log.info("Course name not found, ready for creating new courses");
 
         // create course
         log.info("Create new course");
@@ -162,11 +167,15 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public String rejectCourseRequest(Long requestId) {
 
+        log.info("Reject course request, requestId: {}", requestId);
+
         var courseRequest = courseRequestRepository.findById(requestId);
 
         if (courseRequest.isEmpty()) {
-            throw new ResourceNotFound("Course request is not existed");
+            throw new ResourceNotFound("Course request", "requestId: " + requestId);
         }
+
+        log.info("Found course request {}", requestId);
 
         CourseRequest request = courseRequest.get();
 
@@ -180,8 +189,7 @@ public class CourseServiceImpl implements CourseService {
         if (user.getCourseRequests().contains(request)) {
             user.getCourseRequests().remove(request);
         } else {
-            log.error("Invalid User - Course request creation");
-            throw new InvalidRequestData("Invalid User - Course Request creation");
+            throw new NoSuchElementException("User " + user.getUsername() + " does not have course request " + courseRequest.get().getId());
         }
 
         log.info("Delete course request");
@@ -206,11 +214,9 @@ public class CourseServiceImpl implements CourseService {
     @Transactional(readOnly = true)
     public PageResponse<?> getAllCourseBySearch(Integer pageNo, Integer pageSize, String... searchBy) {
 
-        Page<Course> courses = utilsRepository.findCourseBySearchCriteria(pageNo, pageSize, searchBy);
+        log.info("Get all course by search criteria, pageNo: {}, pageSize: {}, searchBy: {}", pageNo, pageSize, searchBy);
 
-//        Pageable pageable = PageRequest.of(pageNo, pageSize);
-//
-//        Page<Course> courses = courseRepository.findAll(pageable);
+        Page<Course> courses = utilsRepository.findCourseBySearchCriteria(pageNo, pageSize, searchBy);
 
         return PageResponse.builder()
                 .status(HttpStatus.OK.value())
@@ -232,11 +238,15 @@ public class CourseServiceImpl implements CourseService {
     @Transactional(readOnly = true)
     public CourseResponse getCourseDetail(Long courseId) {
 
+        log.info("Get course {}", courseId);
+
         var course_ = courseRepository.findById(courseId);
 
         if (course_.isEmpty() || !course_.get().isStatus()) {
-            throw new ResourceNotFound("Course does not ready, courseId: " + courseId);
+            throw new ResourceNotFound("Course","courseId: " + courseId);
         }
+
+        log.info("Found course {}, return details", courseId);
 
         Course course = course_.get();
 
@@ -278,11 +288,19 @@ public class CourseServiceImpl implements CourseService {
 
         User user = userService.getUserFromAuthentication();
 
+        log.info("User {} register course {}", user.getId(), courseId);
+
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty() || !course.get().isStatus()) {
-            throw new InvalidRequestData("Course not existed");
+        if (course.isEmpty()) {
+            throw new ResourceNotFound("Course", "courseId: " + courseId);
         }
+
+        if (!course.get().isStatus()) {
+            throw new ResourceNotReady("Course", courseId);
+        }
+
+        log.info("Course {} ready", courseId);
 
         user.addCourse(course.get());
         course.get().addUser(user);
@@ -290,10 +308,12 @@ public class CourseServiceImpl implements CourseService {
         courseRepository.save(course.get());
         userRepository.save(user);
 
+        log.info("Get role and add to user");
+
         var role = roleRepository.findByName("STUDENT_COURSE_" + course.get().getId());
 
         if (role == null) {
-            throw new InvalidRequestData("Role not existed");
+            throw new ResourceNotFound("Role", "name: " + "STUDENT_COURSE_" + course.get().getId());
         }
 
         role.addUser(user);
@@ -317,15 +337,25 @@ public class CourseServiceImpl implements CourseService {
 
         var team = teamRepository.findById(teamId);
 
-        if (team.isEmpty() || !team.get().isActive()) {
-            throw new InvalidRequestData("Team not existed or invalid");
+        if (team.isEmpty()) {
+            throw new ResourceNotFound("Team", "teamId: " + teamId);
+        }
+
+        if (!team.get().isActive()) {
+            throw new ResourceNotReady("Team", teamId);
         }
 
         var course = courseRepository.findById(courseId);
 
-        if (course.isEmpty() || !course.get().isStatus()) {
-            throw new InvalidRequestData("Course not existed");
+        if (course.isEmpty()) {
+            throw new ResourceNotFound("Course", "courseId: " + courseId);
         }
+
+        if (!course.get().isStatus()) {
+            throw new ResourceNotReady("Course", courseId);
+        }
+
+        log.info("Course {} ready", courseId);
 
         team.get().addCourse(course.get());
         course.get().addTeam(team.get());
@@ -333,10 +363,12 @@ public class CourseServiceImpl implements CourseService {
         courseRepository.save(course.get());
         teamRepository.save(team.get());
 
+        log.info("Add role to team");
+
         var role = roleRepository.findByName("STUDENT_COURSE_" + course.get().getId());
 
         if (role == null) {
-            throw new InvalidRequestData("Role not existed");
+            throw new ResourceNotFound("Role", "name: " + "STUDENT_COURSE_" + course.get().getId());
         }
 
         role.addTeam(team.get());

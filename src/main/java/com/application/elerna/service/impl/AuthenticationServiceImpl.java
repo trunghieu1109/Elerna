@@ -9,6 +9,7 @@ import com.application.elerna.model.BankAccount;
 import com.application.elerna.model.Role;
 import com.application.elerna.model.Token;
 import com.application.elerna.model.User;
+import com.application.elerna.repository.UserRepository;
 import com.application.elerna.service.*;
 import com.application.elerna.utils.TokenEnum;
 import io.jsonwebtoken.MalformedJwtException;
@@ -33,6 +34,7 @@ import java.util.UUID;
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final UserService userService;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -57,7 +59,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @return TokenResponse
      */
     @Override
-    public TokenResponse signUp(SignUpRequest request) {
+    public TokenResponse signUp(SignUpRequest request) throws MessagingException, UnsupportedEncodingException {
 
         // extract data
         String username = request.getUsername();
@@ -151,6 +153,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         log.info("Save user {}", user.getUsername());
         userService.saveUser(user);
+
+        if (user.getId() != null) {
+
+            log.info("Generating sign up confirm token");
+            String signupToken = jwtService.generateSignupToken(username);
+
+            mailService.sendConfirmLink(user.getEmail(), user.getId(), username,signupToken);
+        }
 
         return TokenResponse.builder()
                 .accessToken(accessToken)
@@ -489,6 +499,38 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         userService.saveUser(user);
 
         return "Change password successfully";
+    }
+
+    /**
+     * Confirm user for signing up
+     *
+     * @param userId Long
+     * @param secretCode String
+     * @return String
+     */
+    @Override
+    public String confirmUser(Long userId, String secretCode) {
+
+        var user = userRepository.findById(userId);
+
+        if (user.isEmpty()) {
+            throw new ResourceNotFound("User", "userId: " + userId);
+        }
+
+        if (!user.get().isActive()) {
+            throw new ResourceNotReady("User", userId);
+        }
+
+        String username = jwtService.extractUsername(secretCode, TokenEnum.SIGNUP_TOKEN);
+        if (username.isEmpty()) {
+            throw new MalformedJwtException("Token is not matched to any user");
+        }
+
+        if (!jwtService.isValid(secretCode, TokenEnum.SIGNUP_TOKEN, user.get())) {
+            throw new MalformedJwtException("Token is invalid");
+        }
+
+        return "User is matched to userId. Signup completely";
     }
 
     /**

@@ -1,9 +1,11 @@
 package com.application.elerna.exception;
 
 import com.application.elerna.dto.response.ErrorResponse;
+import com.application.elerna.dto.response.ResponseData;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -11,8 +13,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.SignatureException;
 import java.util.Date;
@@ -118,6 +119,19 @@ public class AuthenticationExceptionHandler {
     @ExceptionHandler(ExpiredJwtException.class)
     public ErrorResponse handleExpiredJwtException(ExpiredJwtException ex) {
         log.error("Token has been expired, message: {}", ex.getMessage());
+
+        return ErrorResponse.builder()
+                .timestamp(new Date(System.currentTimeMillis()))
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .cause(HttpStatus.UNAUTHORIZED.getReasonPhrase())
+                .message(ex.getMessage())
+                .path("")
+                .build();
+    }
+
+    @ExceptionHandler(InvalidPrincipalException.class)
+    public ErrorResponse handleInvalidPrincipalException(Exception ex) {
+        log.info("Authentication principal is invalid");
 
         return ErrorResponse.builder()
                 .timestamp(new Date(System.currentTimeMillis()))

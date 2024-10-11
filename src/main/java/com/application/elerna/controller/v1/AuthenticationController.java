@@ -13,15 +13,19 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.UnsupportedEncodingException;
 
 @RestController
 @RequiredArgsConstructor
@@ -65,7 +69,7 @@ public class AuthenticationController {
                             examples = @ExampleObject(value = ResponseExample.signupExample))
             )})
     @PostMapping("/signup")
-    public ResponseData<TokenResponse> signUp(@Valid @RequestBody SignUpRequest request) {
+    public ResponseData<TokenResponse> signUp(@Valid @RequestBody SignUpRequest request) throws MessagingException, UnsupportedEncodingException {
 
         log.info("Register new account");
 
@@ -165,6 +169,26 @@ public class AuthenticationController {
     @PostMapping("/reset-password")
     public ResponseData<String> resetPassword(@RequestBody ResetPasswordRequest request) {
         return new ResponseData<>(HttpStatus.ACCEPTED, authenticationService.resetPassword(request));
+    }
+
+    /**
+     *
+     * Confirm for signing up
+     *
+     * @param userId Long
+     * @param secretCode String
+     * @return ResponseData<String>
+     */
+    @Operation(summary = "Confirm for sign up new account", description = EndpointDescription.confirmSignup,
+            responses = { @ApiResponse(responseCode = "200", description = "Confirm for sign up new account successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            examples = @ExampleObject(value = ResponseExample.confirmSignUp))
+            )})
+    @GetMapping("/confirm-signup/{userId}")
+    public ResponseData<?> confirmUser(@Min(1) @PathVariable("userId") Long userId, @RequestParam String secretCode) {
+        log.info("Confirm user sign up, userId: {}, secretCode: {}", userId, secretCode);
+
+        return new ResponseData<>(HttpStatus.ACCEPTED, "Confirm successfully", authenticationService.confirmUser(userId, secretCode));
     }
 
 }

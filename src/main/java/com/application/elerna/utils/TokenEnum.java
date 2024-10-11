@@ -4,6 +4,7 @@ public enum TokenEnum {
 
     ACCESS_TOKEN,
     REFRESH_TOKEN,
-    RESET_TOKEN
+    RESET_TOKEN,
+    SIGNUP_TOKEN
 
 }

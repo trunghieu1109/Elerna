@@ -13,6 +13,8 @@ public interface JwtService {
 
     String generateRefreshToken(String username);
 
+    String generateSignupToken(String username);
+
     String generateResetToken(String username);
 
     String extractUsername(String token, TokenEnum type);

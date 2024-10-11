@@ -31,6 +31,9 @@ public class JwtServiceImpl implements JwtService {
     @Value("${jwt.expirationDay}")
     private long expirationDay;
 
+    @Value("${jwt.expirationMinute}")
+    private long expirationMinute;
+
     @Value("${jwt.secretKey}")
     private String secretKey;
 
@@ -39,6 +42,9 @@ public class JwtServiceImpl implements JwtService {
 
     @Value("${jwt.refreshKey}")
     private String refreshKey;
+
+    @Value("${jwt.signupKey}")
+    private String signupKey;
 
     /**
      *
@@ -132,6 +138,36 @@ public class JwtServiceImpl implements JwtService {
 
     /**
      *
+     * Generate refresh token
+     *
+     * @param username String
+     * @return String
+     */
+    @Override
+    public String generateSignupToken(String username) {
+        return generateSignupToken(new HashMap<String, Object>(), username);
+    }
+
+    /**
+     *
+     * Generate refresh token specifically
+     *
+     * @param claims Map<String, Object>
+     * @param username String
+     * @return String
+     */
+    private String generateSignupToken(Map<String, Object> claims, String username) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(username)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * expirationMinute))
+                .signWith(getKey(SIGNUP_TOKEN), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    /**
+     *
      * Get key from secretKey
      *
      * @param type TokenEnum
@@ -145,8 +181,10 @@ public class JwtServiceImpl implements JwtService {
         } else {
             if (REFRESH_TOKEN.equals(type)) {
                 byteKey = Decoders.BASE64.decode(refreshKey);
-            } else {
+            } if (RESET_TOKEN.equals(type)) {
                 byteKey = Decoders.BASE64.decode(resetKey);
+            } else {
+                byteKey = Decoders.BASE64.decode(signupKey);
             }
         }
 
@@ -185,6 +223,8 @@ public class JwtServiceImpl implements JwtService {
                 return false;
             }
         }
+
+//        log.info(username + ", " + user.getUsername());
 
         if (!username.equals(user.getUsername())) {
             throw new MalformedJwtException("Token not match to " + user.getUsername());

@@ -13,7 +13,7 @@ import java.io.UnsupportedEncodingException;
 @Service
 public interface AuthenticationService {
 
-    TokenResponse signUp(SignUpRequest request);
+    TokenResponse signUp(SignUpRequest request) throws MessagingException, UnsupportedEncodingException;
 
     TokenResponse authenticate(SignInRequest request);
 
@@ -26,5 +26,7 @@ public interface AuthenticationService {
     String confirm(String resetToken);
 
     String resetPassword(ResetPasswordRequest request);
+
+    String confirmUser(Long userId, String secretCode);
 
 }
