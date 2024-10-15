@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -136,6 +137,51 @@ public class MailServiceImpl implements MailService {
         helper.setText(html, true);
 
         mailSender.send(message);
+
+        log.info("Send email successfully");
+
+    }
+
+    /**
+     *
+     * Send email to confirm signup by Kafka
+     *
+     * @param message String
+     */
+    @Override
+    @KafkaListener(topics = "confirm-account-topic", groupId = "confirm-account-group")
+    public void sendConfirmLinkByKafka(String message) throws MessagingException, UnsupportedEncodingException {
+        log.info("Send email to confirm account registration by Kafka");
+
+        String[] arr = message.split(",");
+
+        String email = arr[0].substring(arr[0].indexOf("=") + 1);
+        String id = arr[1].substring(arr[1].indexOf("=") + 1);
+        String secretKey = arr[2].substring(arr[2].indexOf("=") + 1);
+
+        log.info("Create new message to send by kafka");
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, "UTF-8");
+
+        log.info("Create confirm link");
+        Context context = new Context();
+        String linkConfirm = String.format("http://localhost:80/api/v1/auth/confirm-signup/%s?secretCode=%s", id, secretKey).toString();
+
+        log.info("Link confirm: {}", linkConfirm);
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("linkConfirm", linkConfirm);
+        context.setVariables(properties);
+
+        log.info("Set email content");
+        helper.setFrom(mailFrom, "Hieu Nguyen");
+        helper.setTo("hieukunno1109@gmail.com");
+        helper.setSubject("Please confirm your account");
+
+        String html = templateEngine.process("confirmEmail.html", context);
+
+        helper.setText(html, true);
+
+        mailSender.send(mimeMessage);
 
         log.info("Send email successfully");
 

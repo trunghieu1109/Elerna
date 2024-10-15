@@ -1,40 +1,65 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: mysql-container
-    env_file:
-      - .env
-
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./sql-scripts:/docker-entrypoint-initdb.d
-    networks:
-      - elerna-app
+      - '22181:2181'
 
-  elerna-api-service:
-    container_name: elerna-service
-    build:
-      context: ./
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    ports:
-      - "8080:80"
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
     depends_on:
-      - mysql
-    networks:
-      - elerna-app
-    volumes:
-      - E:\Exercise\Elerna\src\main\resources\Lesson:/app/lesson_folder
-      - E:\Exercise\Elerna\src\main\resources\Assignment:/app/assignment_folder
-      - E:\Exercise\Elerna\src\main\resources\Contest:/app/contest_folder
-      - E:\Exercise\Elerna\src\main\resources\Submission:/app/submission_folder
+      - zookeeper
+    ports:
+      - '29092:29092'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-volumes:
-  db_data:
 
-networks:
-  elerna-app:
-    driver: bridge
+#  mysql:
+#    image: mysql:8.0
+#    container_name: mysql-container
+#    env_file:
+#      - .env
+#
+#    ports:
+#      - "3306:3306"
+#    volumes:
+#      - db_data:/var/lib/mysql
+#      - ./sql-scripts:/docker-entrypoint-initdb.d
+#    networks:
+#      - elerna-app
+#
+#  elerna-api-service:
+#    container_name: elerna-service
+#    build:
+#      context: ./
+#      dockerfile: Dockerfile
+#    env_file:
+#      - .env
+#    ports:
+#      - "8080:80"
+#    depends_on:
+#      - mysql
+#    networks:
+#      - elerna-app
+#    volumes:
+#      - E:\Exercise\Elerna\src\main\resources\Lesson:/app/lesson_folder
+#      - E:\Exercise\Elerna\src\main\resources\Assignment:/app/assignment_folder
+#      - E:\Exercise\Elerna\src\main\resources\Contest:/app/contest_folder
+#      - E:\Exercise\Elerna\src\main\resources\Submission:/app/submission_folder
+
+#volumes:
+#  db_data:
+#
+#networks:
+#  elerna-app:
+#    driver: bridge

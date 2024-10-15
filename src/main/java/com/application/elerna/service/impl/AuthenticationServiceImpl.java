@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final TokenService tokenService;
     private final MailService mailService;
     private final RoleService roleService;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     private final BankAccountService bankAccountService;
 
@@ -159,7 +161,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             log.info("Generating sign up confirm token");
             String signupToken = jwtService.generateSignupToken(username);
 
-            mailService.sendConfirmLink(user.getEmail(), user.getId(), username,signupToken);
+            String message = String.format("email=%s,userId=%s,secretCode=%s", user.getEmail(), user.getId(), signupToken);
+
+            log.info("Message sent via kafka: {}", message);
+
+            kafkaTemplate.send("confirm-account-topic", message);
+
+//            mailService.sendConfirmLink(user.getEmail(), user.getId(), username, signupToken);
         }
 
         return TokenResponse.builder()
